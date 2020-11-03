@@ -7,7 +7,8 @@
         :disabled="disabled"
         :loading="loading"
         :font-size="fontSize"
-        :popover-options="popoverOptions">
+        :popover-options="popoverOptions"
+        :readonly="readonly">
         <bk-option-group v-for="(group, index) in list"
             :key="index"
             :name="group[displayKey]">
@@ -15,6 +16,7 @@
                 :key="option[settingKey]"
                 :id="option[settingKey]"
                 :name="option[displayKey]">
+                <slot v-bind="option" />
             </bk-option>
         </bk-option-group>
     </bk-select>
@@ -26,12 +28,14 @@
         :disabled="disabled"
         :loading="loading"
         :font-size="fontSize"
-        :popover-options="popoverOptions">
+        :popover-options="popoverOptions"
+        :readonly="readonly">
         <bk-option
             v-for="option in list"
             :key="option[settingKey]"
             :id="option[settingKey]"
             :name="option[displayKey]">
+            <slot v-bind="option" />
         </bk-option>
     </bk-select>
 </template>
@@ -94,7 +98,8 @@
             popoverOptions: {
                 type: Object,
                 default: () => ({})
-            }
+            },
+            readonly: Boolean
         },
         data () {
             return {

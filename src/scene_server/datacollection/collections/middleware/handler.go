@@ -70,7 +70,7 @@ func (d *Discover) CreateInstKey(objID string, ownerID string, val []string) str
 
 func (d *Discover) GetInstFromRedis(instKey string) (map[string]interface{}, error) {
 
-	val, err := d.redisCli.Get(instKey).Result()
+	val, err := d.redisCli.Get(d.ctx, instKey).Result()
 	if err != nil {
 		return nil, fmt.Errorf("%s: get inst cache error: %s", instKey, err)
 	}
@@ -86,7 +86,7 @@ func (d *Discover) GetInstFromRedis(instKey string) (map[string]interface{}, err
 }
 
 func (d *Discover) TrySetRedis(key string, value []byte, duration time.Duration) {
-	_, err := d.redisCli.Set(key, value, duration).Result()
+	_, err := d.redisCli.Set(d.ctx, key, value, duration).Result()
 	if err != nil {
 		blog.Warnf("%s: flush to redis failed: %s", key, err)
 	} else {
@@ -96,7 +96,7 @@ func (d *Discover) TrySetRedis(key string, value []byte, duration time.Duration)
 }
 
 func (d *Discover) TryUnsetRedis(key string) {
-	_, err := d.redisCli.Del(key).Result()
+	_, err := d.redisCli.Del(d.ctx, key).Result()
 	if err != nil {
 		blog.Warnf("%s: remove from redis failed: %s", key, err)
 	} else {
@@ -275,6 +275,7 @@ func (d *Discover) UpdateOrCreateInst(msg *string) error {
 		return fmt.Errorf("get bk_inst_id failed: %s %s", inst[instIDField], err.Error())
 	}
 
+	dataChange := map[string]interface{}{}
 	hasDiff := false
 	for attrId, attrValue := range bodyData {
 
@@ -284,11 +285,13 @@ func (d *Discover) UpdateOrCreateInst(msg *string) error {
 				relateObj, ok := relateList[0].(map[string]interface{})
 
 				if ok && (relateObj["id"] != "" && relateObj["id"] != "0" && relateObj["id"] != nil) {
-					blog.Infof("skip update exist single relation attr: %s->%v", attrId, attrValue)
-				} else if attrValue != "" {
-					blog.Debug("[relation changed]  %s: %v ---> %v", attrId, attrValue)
-					inst[attrId] = attrValue
-					hasDiff = true
+					blog.Infof("skip updating single relation attr: [%s]=%v, since it is existed:%v.", defaultRelateAttr, attrValue, relateObj["id"])
+				} else {
+					if val, ok := attrValue.(string); ok && val != "" {
+						dataChange[defaultRelateAttr] = val
+						blog.Debug("[relation changed]  %s: %v ---> %v", defaultRelateAttr, "nil", dataChange[attrId])
+						hasDiff = true
+					}
 				}
 
 				continue
@@ -298,10 +301,9 @@ func (d *Discover) UpdateOrCreateInst(msg *string) error {
 			continue
 
 		}
-
 		if inst[attrId] != attrValue {
-			inst[attrId] = attrValue
-			blog.Debug("[changed]  %s: %v ---> %v", attrId, attrValue, inst[attrId])
+			dataChange[attrId] = attrValue
+			blog.Debug("[changed]  %s: %v ---> %v", attrId, inst[attrId], dataChange[attrId])
 			hasDiff = true
 		}
 	}
@@ -343,7 +345,7 @@ func (d *Discover) UpdateOrCreateInst(msg *string) error {
 
 	// to update.
 	input := metadata.UpdateOption{
-		Data: inst,
+		Data: dataChange,
 		Condition: map[string]interface{}{
 			instIDField: instID,
 		},

@@ -13,7 +13,6 @@
 package service
 
 import (
-	"reflect"
 	"strconv"
 
 	"configcenter/src/ac/iam"
@@ -55,11 +54,11 @@ func (s *Service) FindManyCloudArea(ctx *rest.Contexts) {
 		input.Page.Sort = "-" + common.CreateTimeField
 	}
 
-	// if not exact search, change the string query to regexp
-	if input.Exact != true {
+	// if fuzzy search, change the string query to regexp
+	if input.IsFuzzy == true {
 		for k, v := range input.Condition {
-			if reflect.TypeOf(v).Kind() == reflect.String {
-				field := v.(string)
+			field, ok := v.(string)
+			if ok {
 				input.Condition[k] = mapstr.MapStr{
 					common.BKDBLIKE: params.SpecialCharChange(field),
 					"$options":      "i",
@@ -121,7 +120,7 @@ func (s *Service) CreatePlatBatch(ctx *rest.Contexts) {
 	}
 
 	user := util.GetUser(ctx.Request.Request.Header)
-	for i, _ := range input.Data {
+	for i := range input.Data {
 		input.Data[i][common.BKCreator] = user
 		input.Data[i][common.BKLastEditor] = user
 	}
@@ -546,4 +545,34 @@ func (s *Service) addPlatSyncTaskIDs(ctx *rest.Contexts, data *[]mapstr.MapStr) 
 	}
 
 	return nil
+}
+
+// FindCloudAreaHostCount find host count in every cloudarea
+func (s *Service) FindCloudAreaHostCount(ctx *rest.Contexts) {
+	rid := ctx.Kit.Rid
+	input := new(metadata.CloudAreaHostCount)
+	if err := ctx.DecodeInto(input); nil != err {
+		ctx.RespAutoError(err)
+		return
+	}
+
+	rawErr := input.Validate()
+	if rawErr.ErrCode != 0 {
+		ctx.RespAutoError(rawErr.ToCCError(ctx.Kit.CCError))
+		return
+	}
+
+	res, err := s.CoreAPI.CoreService().Host().FindCloudAreaHostCount(ctx.Kit.Ctx, ctx.Kit.Header, *input)
+	if nil != err {
+		blog.Errorf("FindCloudAreaHostCount http do error: %v input:%#v,rid:%s", err, *input, rid)
+		ctx.RespAutoError(ctx.Kit.CCError.CCError(common.CCErrCommHTTPDoRequestFailed))
+		return
+	}
+	if false == res.Result {
+		blog.Errorf("FindCloudAreaHostCount http reply error.  input:%#v, err code:%d, err msg:%s, rid:%s", *input, res.Code, res.ErrMsg, rid)
+		ctx.RespAutoError(res.CCError())
+		return
+	}
+
+	ctx.RespEntity(res.Data)
 }

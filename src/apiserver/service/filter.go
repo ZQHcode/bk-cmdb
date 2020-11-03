@@ -13,6 +13,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -106,6 +107,11 @@ func (s *service) URLFilterChan(req *restful.Request, resp *restful.Response, ch
 
 	case CloudType:
 		servers, err = s.discovery.CloudServer().GetServers()
+	default:
+		name := string(kind)
+		if name != "" {
+			servers, err = s.discovery.Server(name).GetServers()
+		}
 	}
 
 	if err != nil {
@@ -279,7 +285,7 @@ func (s *service) LimiterFilter() func(req *restful.Request, resp *restful.Respo
 		}
 
 		key := common.ApiCacheLimiterRulePrefix + rule.RuleName
-		result, err := s.cache.Eval(setRequestCntTTLScript, []string{key}, rule.TTL).Result()
+		result, err := s.cache.Eval(context.Background(), setRequestCntTTLScript, []string{key}, rule.TTL).Result()
 		if err != nil {
 			blog.Errorf("redis Eval failed, key:%s, rule:%#v, err: %v, rid: %s", key, *rule, err, rid)
 			fchain.ProcessFilter(req, resp)

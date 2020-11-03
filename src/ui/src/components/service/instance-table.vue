@@ -17,12 +17,12 @@
             <bk-table-column v-for="column in header"
                 :key="column.id"
                 :prop="column.id"
-                :label="column.name">
+                :label="column.name"
+                show-overflow-tooltip>
                 <template slot-scope="{ row }">
                     <cmdb-property-value v-if="column.id !== 'bind_info'"
                         :value="row[column.id]"
                         :show-unit="false"
-                        :show-title="true"
                         :property="column.property">
                     </cmdb-property-value>
                     <process-bind-info-value v-else
@@ -31,7 +31,7 @@
                     </process-bind-info-value>
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('操作')" fixed="right">
+            <bk-table-column :label="$t('操作')" fixed="right" v-if="showOperation">
                 <template slot-scope="{ row, $index }">
                     <a href="javascript:void(0)" class="text-primary mr10" @click="handleEditProcess($index)">
                         {{$t('编辑')}}
@@ -105,6 +105,10 @@
             topology: {
                 type: String,
                 default: ''
+            },
+            showOperation: {
+                type: Boolean,
+                default: true
             }
         },
         data () {

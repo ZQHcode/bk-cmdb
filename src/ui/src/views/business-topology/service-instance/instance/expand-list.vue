@@ -15,7 +15,6 @@
                     :theme="property.bk_property_id === 'bk_func_name' ? 'primary' : 'default'"
                     :value="row.property[property.bk_property_id]"
                     :show-unit="false"
-                    :show-title="true"
                     :property="property"
                     @click.native="handleView(row)">
                 </cmdb-property-value>
@@ -153,6 +152,7 @@
                     title: this.$t('查看进程'),
                     instance: row.property,
                     hostId: row.relation.bk_host_id,
+                    bizId: this.bizId,
                     serviceTemplateId: this.serviceInstance.service_template_id,
                     processTemplateId: row.relation.process_template_id,
                     submitHandler: this.editSubmitHandler
@@ -164,6 +164,7 @@
                     title: this.$t('编辑进程'),
                     instance: row.property,
                     hostId: row.relation.bk_host_id,
+                    bizId: this.bizId,
                     serviceTemplateId: this.serviceInstance.service_template_id,
                     processTemplateId: row.relation.process_template_id,
                     submitHandler: this.editSubmitHandler

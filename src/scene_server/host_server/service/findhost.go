@@ -548,6 +548,7 @@ func (s *Service) ListBizHosts(ctx *rest.Contexts) {
 		ctx.RespAutoError(ccErr)
 		return
 	}
+	ctx.SetReadPreference(common.SecondaryPreferredMode)
 	hostResult, ccErr := s.listBizHosts(ctx, bizID, parameter)
 	if ccErr != nil {
 		blog.ErrorJSON("ListBizHosts failed, listBizHosts failed, bizID: %s, parameter: %s, err: %s, rid:%s", bizID, parameter, ccErr.Error(), rid)
@@ -596,6 +597,13 @@ func (s *Service) listBizHosts(ctx *rest.Contexts, bizID int64, parameter meta.L
 		if !setList.Result {
 			blog.Errorf("get set with cond: %v failed, err: %v, rid: %s", setCond, setErr, rid)
 			return nil, errors.New(setList.Code, setList.ErrMsg)
+		}
+
+		if len(setList.Data.Info) == 0 {
+			return &meta.ListHostResult{
+				Count: 0,
+				Info:  []map[string]interface{}{},
+			}, nil
 		}
 
 		for _, set := range setList.Data.Info {

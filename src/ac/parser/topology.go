@@ -1119,16 +1119,27 @@ func (ps *parseStream) object() *parseStream {
 
 	// batch create/update common object operation
 	if ps.hitPattern(createObjectBatchPattern, http.MethodPost) {
-		data := gjson.ParseBytes(ps.RequestCtx.Body).Map()
+		body, err := ps.RequestCtx.getRequestBody()
+		if err != nil {
+			ps.err = err
+			return ps
+		}
+		data := gjson.ParseBytes(body).Map()
 		objIDs := make([]string, len(data))
 		index := 0
 
-		for objID, _ := range data {
+		for objID := range data {
 			objIDs[index] = objID
 			index++
 		}
 
 		models, err := ps.searchModels(mapstr.MapStr{common.BKObjIDField: map[string]interface{}{common.BKDBIN: objIDs}})
+		if err != nil {
+			ps.err = err
+			return ps
+		}
+
+		bizID, err := ps.RequestCtx.getBizIDFromBody()
 		if err != nil {
 			ps.err = err
 			return ps
@@ -1142,7 +1153,7 @@ func (ps *parseStream) object() *parseStream {
 						Action:     meta.Update,
 						InstanceID: model.ID,
 					},
-					BusinessID: ps.RequestCtx.BizID,
+					BusinessID: bizID,
 				})
 		}
 		return ps
@@ -1470,13 +1481,17 @@ func (ps *parseStream) objectAttributeGroup() *parseStream {
 	//}
 
 	if ps.hitPattern(updateObjectAttributeGroupPropertyPattern, http.MethodPut) {
-
-		if !gjson.GetBytes(ps.RequestCtx.Body, "data").Exists() {
+		val, err := ps.RequestCtx.getValueFromBody("data")
+		if err != nil {
+			ps.err = err
+			return ps
+		}
+		if !val.Exists() {
 			ps.err = errors.New("invalid request format")
 			return ps
 		}
 
-		data := gjson.GetBytes(ps.RequestCtx.Body, "data").String()
+		data := val.String()
 		groups := make([]metadata.PropertyGroupObjectAtt, 0)
 		if err := json.Unmarshal([]byte(data), &groups); err != nil {
 			ps.err = err
@@ -1544,9 +1559,15 @@ func (ps *parseStream) objectAttributeGroup() *parseStream {
 			return ps
 		}
 
+		bizID, err := ps.RequestCtx.getBizIDFromBody()
+		if err != nil {
+			ps.err = err
+			return ps
+		}
+
 		ps.Attribute.Resources = []meta.ResourceAttribute{
 			{
-				BusinessID: ps.RequestCtx.BizID,
+				BusinessID: bizID,
 				Basic: meta.Basic{
 					Type:   meta.ModelAttributeGroup,
 					Action: meta.Delete,
@@ -1707,7 +1728,9 @@ var (
 	updateModuleRegexp                = regexp.MustCompile(`^/api/v3/module/[0-9]+/[0-9]+/[0-9]+/?$`)
 	updateModuleHostApplyStatusRegexp = regexp.MustCompile(`^/api/v3/module/host_apply_enable_status/bk_biz_id/([0-9]+)/bk_module_id/([0-9]+)/?$`)
 	findModuleRegexp                  = regexp.MustCompile(`^/api/v3/module/search/[^\s/]+/[0-9]+/[0-9]+/?$`)
+	findMouduleByConditionRegexp      = regexp.MustCompile(`^/api/v3/findmany/module/biz/[0-9]+/?$`)
 	findMouduleBatchRegexp            = regexp.MustCompile(`^/api/v3/findmany/module/bk_biz_id/[0-9]+/?$`)
+	findMouduleWithRelationRegexp     = regexp.MustCompile(`^/api/v3/findmany/module/with_relation/biz/[0-9]+/?$`)
 	findModuleByServiceTemplateRegexp = regexp.MustCompile(`^/api/v3/module/bk_biz_id/(?P<bk_biz_id>[0-9]+)/service_template_id/(?P<service_template_id>[0-9]+)/?$`)
 )
 
@@ -1935,6 +1958,32 @@ func (ps *parseStream) objectModule() *parseStream {
 		return ps
 	}
 
+	// find modules by condition in one biz
+	if ps.hitRegexp(findMouduleByConditionRegexp, http.MethodPost) {
+		if len(ps.RequestCtx.Elements) != 6 {
+			ps.err = errors.New("find module batch, but got invalid url")
+			return ps
+		}
+
+		bizID, err := strconv.ParseInt(ps.RequestCtx.Elements[5], 10, 64)
+		if err != nil {
+			ps.err = fmt.Errorf("update module batch, but got invalid biz id %s", ps.RequestCtx.Elements[5])
+			return ps
+		}
+
+		ps.Attribute.Resources = []meta.ResourceAttribute{
+			{
+				BusinessID: bizID,
+				Basic: meta.Basic{
+					Type:   meta.ModelModule,
+					Action: meta.FindMany,
+				},
+				Layers: []meta.Item{},
+			},
+		}
+		return ps
+	}
+
 	// find module batch in one biz
 	if ps.hitRegexp(findMouduleBatchRegexp, http.MethodPost) {
 		if len(ps.RequestCtx.Elements) != 6 {
@@ -1944,7 +1993,32 @@ func (ps *parseStream) objectModule() *parseStream {
 
 		bizID, err := strconv.ParseInt(ps.RequestCtx.Elements[5], 10, 64)
 		if err != nil {
-			ps.err = fmt.Errorf("update module batch, but got invalid biz id %s", ps.RequestCtx.Elements[5])
+			ps.err = fmt.Errorf("find module batch, but got invalid biz id %s", ps.RequestCtx.Elements[5])
+			return ps
+		}
+
+		ps.Attribute.Resources = []meta.ResourceAttribute{
+			{
+				BusinessID: bizID,
+				Basic: meta.Basic{
+					Type:   meta.ModelModule,
+					Action: meta.FindMany,
+				},
+				Layers: []meta.Item{},
+			},
+		}
+		return ps
+	}
+
+	// find module with relation in one biz
+	if ps.hitRegexp(findMouduleWithRelationRegexp, http.MethodPost) {
+		if len(ps.RequestCtx.Elements) != 7 {
+			ps.err = errors.New("find module with relation, but got invalid url")
+			return ps
+		}
+		bizID, err := strconv.ParseInt(ps.RequestCtx.Elements[6], 10, 64)
+		if err != nil {
+			ps.err = fmt.Errorf("find module with relation, but got invalid biz id %s", ps.RequestCtx.Elements[6])
 			return ps
 		}
 
@@ -2343,9 +2417,10 @@ func (ps *parseStream) fullTextSearch() *parseStream {
 }
 
 const (
-	findManyCloudAreaPattern   = "/api/v3/findmany/cloudarea"
-	createCloudAreaPattern     = "/api/v3/create/cloudarea"
-	createManyCloudAreaPattern = "/api/v3/createmany/cloudarea"
+	findManyCloudAreaPattern      = "/api/v3/findmany/cloudarea"
+	createCloudAreaPattern        = "/api/v3/create/cloudarea"
+	createManyCloudAreaPattern    = "/api/v3/createmany/cloudarea"
+	findCloudAreaHostCountPattern = "/api/v3/findmany/cloudarea/hostcount"
 )
 
 var (
@@ -2426,6 +2501,18 @@ func (ps *parseStream) cloudArea() *parseStream {
 					Type:       meta.CloudAreaInstance,
 					Action:     meta.Delete,
 					InstanceID: id,
+				},
+			},
+		}
+		return ps
+	}
+
+	if ps.hitPattern(findCloudAreaHostCountPattern, http.MethodPost) {
+		ps.Attribute.Resources = []meta.ResourceAttribute{
+			{
+				Basic: meta.Basic{
+					Type:   meta.CloudAreaInstance,
+					Action: meta.SkipAction,
 				},
 			},
 		}

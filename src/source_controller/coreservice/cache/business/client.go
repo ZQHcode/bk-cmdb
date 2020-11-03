@@ -23,14 +23,13 @@ import (
 	"configcenter/src/common/mapstr"
 	"configcenter/src/common/metadata"
 	"configcenter/src/source_controller/coreservice/cache/tools"
+	"configcenter/src/storage/dal/redis"
 	"configcenter/src/storage/driver/mongodb"
 	"configcenter/src/storage/reflector"
-
-	"gopkg.in/redis.v5"
 )
 
 type Client struct {
-	rds   *redis.Client
+	rds   redis.Client
 	event reflector.Interface
 	lock  tools.RefreshingLock
 }
@@ -65,11 +64,11 @@ func (c *Client) GetBizBaseList() ([]BizBaseInfo, error) {
 // get a business's all info.
 func (c *Client) GetBusiness(bizID int64) (string, error) {
 	key := bizKey.detailKey(bizID)
-	exist, err := c.rds.Exists(key).Result()
+	exist, err := c.rds.Exists(context.Background(), key).Result()
 	if err != nil {
 		blog.Warnf("get business info from cache,  biz: %d, but check exist failed, err: %v", bizID, err)
 		// get from db directly.
-		exist = false
+		exist = 0
 	}
 
 	// try to refresh cache.
@@ -81,8 +80,8 @@ func (c *Client) GetBusiness(bizID int64) (string, error) {
 		getDetail:      c.getBusinessFromMongo,
 	})
 
-	if exist {
-		biz, err := c.rds.Get(key).Result()
+	if exist == 1 {
+		biz, err := c.rds.Get(context.Background(), key).Result()
 		if err == nil {
 			return biz, nil
 		}
@@ -112,7 +111,7 @@ func (c *Client) ListBusiness(ctx context.Context, opt *metadata.ListWithIDOptio
 		})
 	}
 
-	bizList, err := c.rds.MGet(keys...).Result()
+	bizList, err := c.rds.MGet(context.Background(), keys...).Result()
 	if err != nil {
 		blog.Errorf("get business %d info from cache failed, get from db directly, err: %v, rid: %v", opt.IDs, err, rid)
 		return c.listBusinessFromMongo(ctx, opt.IDs, opt.Fields)
@@ -171,7 +170,7 @@ func (c *Client) ListModules(ctx context.Context, opt *metadata.ListWithIDOption
 		})
 	}
 
-	list, err := c.rds.MGet(keys...).Result()
+	list, err := c.rds.MGet(context.Background(), keys...).Result()
 	if err != nil {
 		blog.Errorf("list module %d info from cache failed, get from db directly, err: %v, rid: %v", opt.IDs, err, rid)
 		return c.listModuleFromMongo(ctx, opt.IDs, opt.Fields)
@@ -229,7 +228,7 @@ func (c *Client) ListSets(ctx context.Context, opt *metadata.ListWithIDOption) (
 		})
 	}
 
-	list, err := c.rds.MGet(keys...).Result()
+	list, err := c.rds.MGet(context.Background(), keys...).Result()
 	if err != nil {
 		blog.Errorf("list set %d info from cache failed, get from db directly, err: %v, rid: %v", opt.IDs, err, rid)
 		return c.listSetFromMongo(ctx, opt.IDs, opt.Fields)
@@ -317,21 +316,27 @@ func (c *Client) ListModuleDetails(moduleIDs []int64) ([]string, error) {
 		keys[idx] = moduleKey.detailKey(module)
 	}
 
-	modules, err := c.rds.MGet(keys...).Result()
+	modules, err := c.rds.MGet(context.Background(), keys...).Result()
 	if err == nil {
-		list := make([]string, len(modules))
+		list := make([]string, 0)
 		for idx, m := range modules {
 			if m == nil {
-				detail, err := c.getModuleDetailFromMongo(moduleIDs[idx])
+				detail, isNotFound, err := c.getModuleDetailFromMongoCheckNotFound(moduleIDs[idx])
+				// 跳过不存在的模块，因为作为批量查询的API，调用方希望查询到存在的资源，并自动过滤掉不存在的资源
+				if isNotFound {
+					blog.Errorf("module %d not exist, err: %v", moduleIDs[idx], err)
+					continue
+				}
+
 				if err != nil {
 					blog.Errorf("get module %d detail from db failed, err: %v", moduleIDs[idx], err)
 					return nil, err
 				}
 
-				list[idx] = detail
+				list = append(list, detail)
 				continue
 			}
-			list[idx] = m.(string)
+			list = append(list, m.(string))
 		}
 		return list, nil
 	}
@@ -351,7 +356,7 @@ func (c *Client) GetModuleDetail(moduleID int64) (string, error) {
 		getDetail:      c.getModuleDetailFromMongo,
 	})
 
-	mod, err := c.rds.Get(moduleKey.detailKey(moduleID)).Result()
+	mod, err := c.rds.Get(context.Background(), moduleKey.detailKey(moduleID)).Result()
 	if err == nil && len(mod) != 0 {
 		return mod, nil
 	}
@@ -399,7 +404,7 @@ func (c *Client) GetSet(setID int64) (string, error) {
 		getDetail:      c.getSetDetailFromMongo,
 	})
 
-	set, err := c.rds.Get(setKey.detailKey(setID)).Result()
+	set, err := c.rds.Get(context.Background(), setKey.detailKey(setID)).Result()
 	if err == nil && len(set) != 0 {
 		return set, nil
 	}
@@ -426,20 +431,26 @@ func (c *Client) ListSetDetails(setIDs []int64) ([]string, error) {
 		keys[idx] = setKey.detailKey(set)
 	}
 
-	sets, err := c.rds.MGet(keys...).Result()
+	sets, err := c.rds.MGet(context.Background(), keys...).Result()
 	if err == nil && len(sets) != 0 {
-		all := make([]string, len(sets))
+		all := make([]string, 0)
 		for idx, s := range sets {
 			if s == nil {
-				detail, err := c.getSetDetailFromMongo(setIDs[idx])
+				detail, isNotFound, err := c.getSetDetailFromMongoCheckNotFound(setIDs[idx])
+				// 跳过不存在的集群，因为作为批量查询的API，调用方希望查询到存在的资源，并自动过滤掉不存在的资源
+				if isNotFound {
+					blog.Errorf("set %d not exist, err: %v", setIDs[idx], err)
+					continue
+				}
+
 				if err != nil {
 					blog.Errorf("get set %d from mongodb failed, err: %v", setIDs[idx], err)
 					return nil, err
 				}
-				all[idx] = detail
+				all = append(all, detail)
 				continue
 			}
-			all[idx] = s.(string)
+			all = append(all, s.(string))
 		}
 
 		return all, nil
@@ -482,7 +493,7 @@ func (c *Client) GetCustomLevelDetail(objID string, instID int64) (string, error
 		},
 	})
 
-	custom, err := c.rds.Get(customKey.detailKey(objID, instID)).Result()
+	custom, err := c.rds.Get(context.Background(), customKey.detailKey(objID, instID)).Result()
 	if err == nil && len(custom) != 0 {
 		return custom, nil
 	}
@@ -512,21 +523,27 @@ func (c *Client) ListCustomLevelDetail(objID string, instIDs []int64) ([]string,
 		keys[idx] = customKey.detailKey(objID, instID)
 	}
 
-	customs, err := c.rds.MGet(keys...).Result()
+	customs, err := c.rds.MGet(context.Background(), keys...).Result()
 	if err == nil && len(customs) != 0 {
-		all := make([]string, len(customs))
+		all := make([]string, 0)
 		for idx, cu := range customs {
 			if cu == nil {
-				detail, err := c.getCustomLevelDetail(objID, instIDs[idx])
+				detail, isNotFound, err := c.getCustomLevelDetailCheckNotFound(objID, instIDs[idx])
+				// 跳过不存在的自定义节点，因为作为批量查询的API，调用方希望查询到存在的资源，并自动过滤掉不存在的资源
+				if isNotFound {
+					blog.Errorf("custom layer %s/%d not exist, err: %v", objID, instIDs[idx], err)
+					continue
+				}
+
 				if err != nil {
 					blog.Errorf("get %s/%d detail from mongodb failed, err: %v", objID, instIDs[idx], err)
 					return nil, err
 				}
-				all[idx] = detail
+				all = append(all, detail)
 				continue
 			}
 
-			all[idx] = cu.(string)
+			all = append(all, cu.(string))
 		}
 		return all, nil
 	}
@@ -539,7 +556,7 @@ func (c *Client) ListCustomLevelDetail(objID string, instIDs []int64) ([]string,
 func (c *Client) GetTopology() ([]string, error) {
 	// TODO: try refresh the cache.
 	key := customKey.topologyKey()
-	rank, err := c.rds.Get(key).Result()
+	rank, err := c.rds.Get(context.Background(), key).Result()
 	if err != nil {
 		return nil, err
 	}
