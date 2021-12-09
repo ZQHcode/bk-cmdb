@@ -1,0 +1,37 @@
+{{- if .Values.bklog.file.collectEnabled }}
+# Container Log
+apiVersion: bk.tencent.com/v1alpha1
+kind: BkLogConfig
+metadata:
+  name: bk-cmdb-file-log-config
+spec:
+  dataId: {{ .Values.bklog.file.dataId }}
+  ext_meta:
+    logSourceType: "file"
+  logConfigType: container_log_config
+  namespace: {{ .Release.Namespace }}
+  labelSelector:
+    matchLabels:
+      app: bk-cmdb
+  encoding: 'utf-8'
+  path:
+    - /data/cmdb/cmdb_*/logs/*
+{{- end }}
+{{- if .Values.bklog.std.collectEnabled }}
+---
+# Stdout
+apiVersion: bk.tencent.com/v1alpha1
+kind: BkLogConfig
+metadata:
+  name: bk-cmdb-std-log-config
+spec:
+  dataId: {{ .Values.bklog.std.dataId }}
+  ext_meta:
+    logSourceType: "std"
+  logConfigType: std_log_config
+  namespace: {{ .Release.Namespace }}
+  labelSelector:
+    matchLabels:
+      app: bk-cmdb
+
+{{- end }}
