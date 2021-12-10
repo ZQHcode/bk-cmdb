@@ -7,7 +7,7 @@ migrate:
   enabled: true
   image:
     repository: cmdb_migrate
-    tag: v3.10.9
+    tag: v__VERSION__
 
 migrateDataID:
   enabled: false
@@ -16,7 +16,7 @@ adminserver:
   enabled: true
   image:
     repository: cmdb_adminserver
-    tag: v3.10.9
+    tag: v__VERSION__
   replicas: 1
   port: 80
   configDir: /data/cmdb/cmdb_adminserver/configure
@@ -53,7 +53,7 @@ webserver:
   enabled: true
   image:
     repository: cmdb_webserver
-    tag: v3.10.9
+    tag: v__VERSION__
   replicas: 1
   port: 80
   configDir:
@@ -86,7 +86,7 @@ apiserver:
   enabled: true
   image:
     repository: cmdb_apiserver
-    tag: v3.10.9
+    tag: v__VERSION__
   replicas: 1
   port: 80
   configDir:
@@ -116,7 +116,7 @@ authserver:
   enabled: true
   image:
     repository: cmdb_authserver
-    tag: v3.10.9
+    tag: v__VERSION__
   replicas: 1
   port: 80
   configDir:
@@ -149,7 +149,7 @@ cacheservice:
   enabled: true
   image:
     repository: cmdb_cacheservice
-    tag: v3.10.9
+    tag: v__VERSION__
   replicas: 1
   port: 80
   configDir:
@@ -172,7 +172,7 @@ cloudserver:
   enabled: true
   image:
     repository: cmdb_cloudserver
-    tag: v3.10.9
+    tag: v__VERSION__
   replicas: 1
   port: 80
   configDir:
@@ -196,7 +196,7 @@ coreservice:
   enabled: true
   image:
     repository: cmdb_coreservice
-    tag: v3.10.9
+    tag: v__VERSION__
   replicas: 1
   port: 80
   configDir:
@@ -219,7 +219,7 @@ datacollection:
   enabled: true
   image:
     repository: cmdb_datacollection
-    tag: v3.10.9
+    tag: v__VERSION__
   replicas: 1
   port: 80
   configDir:
@@ -242,7 +242,7 @@ eventserver:
   enabled: true
   image:
     repository: cmdb_eventserver
-    tag: v3.10.9
+    tag: v__VERSION__
   replicas: 1
   port: 80
   configDir:
@@ -265,7 +265,7 @@ hostserver:
   enabled: true
   image:
     repository: cmdb_hostserver
-    tag: v3.10.9
+    tag: v__VERSION__
   replicas: 1
   port: 80
   configDir:
@@ -288,7 +288,7 @@ operationserver:
   enabled: true
   image:
     repository: cmdb_operationserver
-    tag: v3.10.9
+    tag: v__VERSION__
   replicas: 1
   port: 80
   configDir:
@@ -311,7 +311,7 @@ procserver:
   enabled: true
   image:
     repository: cmdb_procserver
-    tag: v3.10.9
+    tag: v__VERSION__
   replicas: 1
   port: 80
   configDir:
@@ -334,7 +334,7 @@ taskserver:
   enabled: true
   image:
     repository: cmdb_taskserver
-    tag: v3.10.9
+    tag: v__VERSION__
   replicas: 1
   port: 80
   configDir:
@@ -357,7 +357,7 @@ toposerver:
   enabled: true
   image:
     repository: cmdb_toposerver
-    tag: v3.10.9
+    tag: v__VERSION__
   replicas: 1
   port: 80
   configDir:
@@ -380,7 +380,7 @@ synchronizeserver:
   enabled: true
   image:
     repository: cmdb_synchronizeserver
-    tag: v3.10.9
+    tag: v__VERSION__
   replicas: 1
   port: 80
   configDir:
@@ -619,10 +619,14 @@ redis:
 elasticsearch:
   enabled: false
   master:
+    persistence:
+      size: 10Gi
     replicas: 1
   coordinating:
     replicas: 1
   data:
+    persistence:
+      size: 10Gi
     replicas: 1
 
 monstache:
