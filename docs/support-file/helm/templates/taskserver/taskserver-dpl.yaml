@@ -43,18 +43,28 @@ spec:
         {{- end }}
         - --v={{ .Values.taskserver.command.logLevel }}
         - --logtostderr={{ .Values.taskserver.command.logToStdErr }}
+        {{- if .Values.taskserver.livenessProbe.enabled }}
         livenessProbe:
           httpGet:
-            path: /healthz
+            path: {{ .Values.taskserver.livenessProbe.path }}
             port: {{ .Values.taskserver.port }}
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          initialDelaySeconds: {{ .Values.taskserver.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.taskserver.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.taskserver.livenessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.taskserver.livenessProbe.successThreshold }}
+          failureThreshold: {{ .Values.taskserver.livenessProbe.failureThreshold }}
+        {{- end }}
+        {{- if .Values.taskserver.readinessProbe.enabled }}
         readinessProbe:
           httpGet:
-            path: /healthz
+            path: {{ .Values.taskserver.readinessProbe.path }}
             port: {{ .Values.taskserver.port }}
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          initialDelaySeconds: {{ .Values.taskserver.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.taskserver.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.taskserver.readinessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.taskserver.readinessProbe.successThreshold }}
+          failureThreshold: {{ .Values.taskserver.readinessProbe.failureThreshold }}
+        {{- end }}
 
         {{- if .Values.taskserver.resources }}
         resources: {{ toYaml .Values.taskserver.resources | nindent 10 }}

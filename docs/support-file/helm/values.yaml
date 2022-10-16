@@ -96,6 +96,39 @@ adminserver:
     requests:
       memory: 512Mi
       cpu: 200m
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  ## @param livenessProbe.enabled Enable livenessProbe
+  ## @param livenessProbe.path Path for to check for livenessProbe
+  ## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param livenessProbe.successThreshold Success threshold for livenessProbe
+  ##
+  livenessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param readinessProbe.enabled Enable readinessProbe
+  ## @param readinessProbe.path Path to check for readinessProbe
+  ## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param readinessProbe.successThreshold Success threshold for readinessProbe
+  ##
+  readinessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
 
 ## @section bk-cmdb apiserver parameters
 ##
@@ -157,6 +190,39 @@ apiserver:
     requests:
       memory: 512Mi
       cpu: 200m
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  ## @param livenessProbe.enabled Enable livenessProbe
+  ## @param livenessProbe.path Path for to check for livenessProbe
+  ## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param livenessProbe.successThreshold Success threshold for livenessProbe
+  ##
+  livenessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param readinessProbe.enabled Enable readinessProbe
+  ## @param readinessProbe.path Path to check for readinessProbe
+  ## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param readinessProbe.successThreshold Success threshold for readinessProbe
+  ##
+  readinessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
 
 ## @section bk-cmdb authserver parameters
 ##
@@ -261,6 +327,39 @@ authserver:
     requests:
       memory: 512Mi
       cpu: 200m
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  ## @param livenessProbe.enabled Enable livenessProbe
+  ## @param livenessProbe.path Path for to check for livenessProbe
+  ## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param livenessProbe.successThreshold Success threshold for livenessProbe
+  ##
+  livenessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param readinessProbe.enabled Enable readinessProbe
+  ## @param readinessProbe.path Path to check for readinessProbe
+  ## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param readinessProbe.successThreshold Success threshold for readinessProbe
+  ##
+  readinessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
 
 ## @section bk-cmdb cacheservice parameters
 ##
@@ -322,6 +421,39 @@ cacheservice:
     requests:
       memory: 512Mi
       cpu: 200m
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  ## @param livenessProbe.enabled Enable livenessProbe
+  ## @param livenessProbe.path Path for to check for livenessProbe
+  ## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param livenessProbe.successThreshold Success threshold for livenessProbe
+  ##
+  livenessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param readinessProbe.enabled Enable readinessProbe
+  ## @param readinessProbe.path Path to check for readinessProbe
+  ## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param readinessProbe.successThreshold Success threshold for readinessProbe
+  ##
+  readinessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
 
 ## @section bk-cmdb cloudserver parameters
 ##
@@ -385,6 +517,39 @@ cloudserver:
     requests:
       memory: 512Mi
       cpu: 200m
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  ## @param livenessProbe.enabled Enable livenessProbe
+  ## @param livenessProbe.path Path for to check for livenessProbe
+  ## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param livenessProbe.successThreshold Success threshold for livenessProbe
+  ##
+  livenessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param readinessProbe.enabled Enable readinessProbe
+  ## @param readinessProbe.path Path to check for readinessProbe
+  ## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param readinessProbe.successThreshold Success threshold for readinessProbe
+  ##
+  readinessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
 
 ## @section bk-cmdb coreservice parameters
 ##
@@ -446,6 +611,39 @@ coreservice:
     requests:
       memory: 512Mi
       cpu: 200m
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  ## @param livenessProbe.enabled Enable livenessProbe
+  ## @param livenessProbe.path Path for to check for livenessProbe
+  ## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param livenessProbe.successThreshold Success threshold for livenessProbe
+  ##
+  livenessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param readinessProbe.enabled Enable readinessProbe
+  ## @param readinessProbe.path Path to check for readinessProbe
+  ## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param readinessProbe.successThreshold Success threshold for readinessProbe
+  ##
+  readinessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
 
 ## @section bk-cmdb datacollection parameters
 ##
@@ -507,6 +705,39 @@ datacollection:
     requests:
       memory: 512Mi
       cpu: 200m
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  ## @param livenessProbe.enabled Enable livenessProbe
+  ## @param livenessProbe.path Path for to check for livenessProbe
+  ## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param livenessProbe.successThreshold Success threshold for livenessProbe
+  ##
+  livenessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param readinessProbe.enabled Enable readinessProbe
+  ## @param readinessProbe.path Path to check for readinessProbe
+  ## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param readinessProbe.successThreshold Success threshold for readinessProbe
+  ##
+  readinessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
 
 ## @section bk-cmdb eventserver parameters
 ##
@@ -568,6 +799,39 @@ eventserver:
     requests:
       memory: 512Mi
       cpu: 200m
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  ## @param livenessProbe.enabled Enable livenessProbe
+  ## @param livenessProbe.path Path for to check for livenessProbe
+  ## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param livenessProbe.successThreshold Success threshold for livenessProbe
+  ##
+  livenessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param readinessProbe.enabled Enable readinessProbe
+  ## @param readinessProbe.path Path to check for readinessProbe
+  ## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param readinessProbe.successThreshold Success threshold for readinessProbe
+  ##
+  readinessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
 
 ## @section bk-cmdb hostserver parameters
 ##
@@ -629,6 +893,39 @@ hostserver:
     requests:
       memory: 512Mi
       cpu: 200m
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  ## @param livenessProbe.enabled Enable livenessProbe
+  ## @param livenessProbe.path Path for to check for livenessProbe
+  ## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param livenessProbe.successThreshold Success threshold for livenessProbe
+  ##
+  livenessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param readinessProbe.enabled Enable readinessProbe
+  ## @param readinessProbe.path Path to check for readinessProbe
+  ## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param readinessProbe.successThreshold Success threshold for readinessProbe
+  ##
+  readinessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
 
 ## @section bk-cmdb operationserver parameters
 ##
@@ -690,6 +987,39 @@ operationserver:
     requests:
       memory: 512Mi
       cpu: 200m
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  ## @param livenessProbe.enabled Enable livenessProbe
+  ## @param livenessProbe.path Path for to check for livenessProbe
+  ## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param livenessProbe.successThreshold Success threshold for livenessProbe
+  ##
+  livenessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param readinessProbe.enabled Enable readinessProbe
+  ## @param readinessProbe.path Path to check for readinessProbe
+  ## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param readinessProbe.successThreshold Success threshold for readinessProbe
+  ##
+  readinessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
 
 ## @section bk-cmdb procserver parameters
 ##
@@ -751,6 +1081,39 @@ procserver:
     requests:
       memory: 512Mi
       cpu: 200m
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  ## @param livenessProbe.enabled Enable livenessProbe
+  ## @param livenessProbe.path Path for to check for livenessProbe
+  ## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param livenessProbe.successThreshold Success threshold for livenessProbe
+  ##
+  livenessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param readinessProbe.enabled Enable readinessProbe
+  ## @param readinessProbe.path Path to check for readinessProbe
+  ## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param readinessProbe.successThreshold Success threshold for readinessProbe
+  ##
+  readinessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
 
 ## @section bk-cmdb synchronizeserver parameters
 ##
@@ -812,6 +1175,39 @@ synchronizeserver:
     requests:
       memory: 512Mi
       cpu: 200m
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  ## @param livenessProbe.enabled Enable livenessProbe
+  ## @param livenessProbe.path Path for to check for livenessProbe
+  ## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param livenessProbe.successThreshold Success threshold for livenessProbe
+  ##
+  livenessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param readinessProbe.enabled Enable readinessProbe
+  ## @param readinessProbe.path Path to check for readinessProbe
+  ## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param readinessProbe.successThreshold Success threshold for readinessProbe
+  ##
+  readinessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
 
 ## @section bk-cmdb taskserver parameters
 ##
@@ -873,6 +1269,39 @@ taskserver:
     requests:
       memory: 512Mi
       cpu: 200m
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  ## @param livenessProbe.enabled Enable livenessProbe
+  ## @param livenessProbe.path Path for to check for livenessProbe
+  ## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param livenessProbe.successThreshold Success threshold for livenessProbe
+  ##
+  livenessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param readinessProbe.enabled Enable readinessProbe
+  ## @param readinessProbe.path Path to check for readinessProbe
+  ## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param readinessProbe.successThreshold Success threshold for readinessProbe
+  ##
+  readinessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
 
 ## @section bk-cmdb toposerver parameters
 ##
@@ -934,7 +1363,39 @@ toposerver:
     requests:
       memory: 512Mi
       cpu: 200m
-
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  ## @param livenessProbe.enabled Enable livenessProbe
+  ## @param livenessProbe.path Path for to check for livenessProbe
+  ## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param livenessProbe.successThreshold Success threshold for livenessProbe
+  ##
+  livenessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param readinessProbe.enabled Enable readinessProbe
+  ## @param readinessProbe.path Path to check for readinessProbe
+  ## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param readinessProbe.successThreshold Success threshold for readinessProbe
+  ##
+  readinessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
 
 ## @section bk-cmdb webserver parameters
 ##
@@ -1045,6 +1506,39 @@ webserver:
     requests:
       memory: 512Mi
       cpu: 200m
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  ## @param livenessProbe.enabled Enable livenessProbe
+  ## @param livenessProbe.path Path for to check for livenessProbe
+  ## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param livenessProbe.successThreshold Success threshold for livenessProbe
+  ##
+  livenessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param readinessProbe.enabled Enable readinessProbe
+  ## @param readinessProbe.path Path to check for readinessProbe
+  ## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param readinessProbe.successThreshold Success threshold for readinessProbe
+  ##
+  readinessProbe:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
 
 ## @section bk-cmdb migrate job parameters
 ##

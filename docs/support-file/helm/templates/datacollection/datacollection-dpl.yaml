@@ -45,18 +45,28 @@ spec:
         - --logtostderr={{ .Values.datacollection.command.logToStdErr }}
         - "--enable-auth"
         - {{ .Values.iam.auth.enabled | quote }}
+        {{- if .Values.datacollection.livenessProbe.enabled }}
         livenessProbe:
           httpGet:
-            path: /healthz
+            path: {{ .Values.datacollection.livenessProbe.path }}
             port: {{ .Values.datacollection.port }}
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          initialDelaySeconds: {{ .Values.datacollection.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.datacollection.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.datacollection.livenessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.datacollection.livenessProbe.successThreshold }}
+          failureThreshold: {{ .Values.datacollection.livenessProbe.failureThreshold }}
+        {{- end }}
+        {{- if .Values.datacollection.readinessProbe.enabled }}
         readinessProbe:
           httpGet:
-            path: /healthz
+            path: {{ .Values.datacollection.readinessProbe.path }}
             port: {{ .Values.datacollection.port }}
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          initialDelaySeconds: {{ .Values.datacollection.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.datacollection.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.datacollection.readinessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.datacollection.readinessProbe.successThreshold }}
+          failureThreshold: {{ .Values.datacollection.readinessProbe.failureThreshold }}
+        {{- end }}
 
         {{- if .Values.datacollection.resources }}
         resources: {{ toYaml .Values.datacollection.resources | nindent 10 }}

@@ -47,18 +47,28 @@ spec:
         {{- end }}
         - --v={{ .Values.webserver.command.logLevel }}
         - --logtostderr={{ .Values.webserver.command.logToStdErr }}
+        {{- if .Values.webserver.livenessProbe.enabled }}
         livenessProbe:
           httpGet:
-            path: /healthz
+            path: {{ .Values.webserver.livenessProbe.path }}
             port: {{ .Values.webserver.port }}
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          initialDelaySeconds: {{ .Values.webserver.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.webserver.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.webserver.livenessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.webserver.livenessProbe.successThreshold }}
+          failureThreshold: {{ .Values.webserver.livenessProbe.failureThreshold }}
+        {{- end }}
+        {{- if .Values.webserver.readinessProbe.enabled }}
         readinessProbe:
           httpGet:
-            path: /healthz
+            path: {{ .Values.webserver.readinessProbe.path }}
             port: {{ .Values.webserver.port }}
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          initialDelaySeconds: {{ .Values.webserver.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.webserver.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.webserver.readinessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.webserver.readinessProbe.successThreshold }}
+          failureThreshold: {{ .Values.webserver.readinessProbe.failureThreshold }}
+        {{- end }}
 
         {{- if .Values.webserver.resources }}
         resources: {{ toYaml .Values.webserver.resources | nindent 10 }}

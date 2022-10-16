@@ -45,18 +45,28 @@ spec:
         - --logtostderr={{ .Values.synchronizeserver.command.logToStdErr }}
         - "--enable-auth"
         - {{ .Values.iam.auth.enabled | quote }}
+        {{- if .Values.synchronizeserver.livenessProbe.enabled }}
         livenessProbe:
           httpGet:
-            path: /healthz
+            path: {{ .Values.synchronizeserver.livenessProbe.path }}
             port: {{ .Values.synchronizeserver.port }}
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          initialDelaySeconds: {{ .Values.synchronizeserver.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.synchronizeserver.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.synchronizeserver.livenessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.synchronizeserver.livenessProbe.successThreshold }}
+          failureThreshold: {{ .Values.synchronizeserver.livenessProbe.failureThreshold }}
+        {{- end }}
+        {{- if .Values.synchronizeserver.readinessProbe.enabled }}
         readinessProbe:
           httpGet:
-            path: /healthz
+            path: {{ .Values.synchronizeserver.readinessProbe.path }}
             port: {{ .Values.synchronizeserver.port }}
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          initialDelaySeconds: {{ .Values.synchronizeserver.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.synchronizeserver.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.synchronizeserver.readinessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.synchronizeserver.readinessProbe.successThreshold }}
+          failureThreshold: {{ .Values.synchronizeserver.readinessProbe.failureThreshold }}
+        {{- end }}
 
         {{- if .Values.synchronizeserver.resources }}
         resources: {{ toYaml .Values.synchronizeserver.resources | nindent 10 }}

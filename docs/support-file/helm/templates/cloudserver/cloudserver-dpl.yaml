@@ -46,18 +46,28 @@ spec:
         - --logtostderr={{ .Values.cloudserver.command.logToStdErr }}
         - "--enable-auth"
         - {{ .Values.iam.auth.enabled | quote }}
+        {{- if .Values.cloudserver.livenessProbe.enabled }}
         livenessProbe:
           httpGet:
-            path: /healthz
+            path: {{ .Values.cloudserver.livenessProbe.path }}
             port: {{ .Values.cloudserver.port }}
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          initialDelaySeconds: {{ .Values.cloudserver.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.cloudserver.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.cloudserver.livenessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.cloudserver.livenessProbe.successThreshold }}
+          failureThreshold: {{ .Values.cloudserver.livenessProbe.failureThreshold }}
+        {{- end }}
+        {{- if .Values.cloudserver.readinessProbe.enabled }}
         readinessProbe:
           httpGet:
-            path: /healthz
+            path: {{ .Values.cloudserver.readinessProbe.path }}
             port: {{ .Values.cloudserver.port }}
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          initialDelaySeconds: {{ .Values.cloudserver.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.cloudserver.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.cloudserver.readinessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.cloudserver.readinessProbe.successThreshold }}
+          failureThreshold: {{ .Values.cloudserver.readinessProbe.failureThreshold }}
+        {{- end }}
 
         {{- if .Values.cloudserver.resources }}
         resources: {{ toYaml .Values.cloudserver.resources | nindent 10 }}

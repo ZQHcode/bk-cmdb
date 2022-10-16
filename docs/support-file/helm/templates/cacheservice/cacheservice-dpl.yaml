@@ -43,18 +43,28 @@ spec:
         {{- end }}
         - --v={{ .Values.cacheservice.command.logLevel }}
         - --logtostderr={{ .Values.cacheservice.command.logToStdErr }}
+        {{- if .Values.cacheservice.livenessProbe.enabled }}
         livenessProbe:
           httpGet:
-            path: /healthz
+            path: {{ .Values.cacheservice.livenessProbe.path }}
             port: {{ .Values.cacheservice.port }}
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          initialDelaySeconds: {{ .Values.cacheservice.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.cacheservice.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.cacheservice.livenessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.cacheservice.livenessProbe.successThreshold }}
+          failureThreshold: {{ .Values.cacheservice.livenessProbe.failureThreshold }}
+        {{- end }}
+        {{- if .Values.cacheservice.readinessProbe.enabled }}
         readinessProbe:
           httpGet:
-            path: /healthz
+            path: {{ .Values.cacheservice.readinessProbe.path }}
             port: {{ .Values.cacheservice.port }}
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          initialDelaySeconds: {{ .Values.cacheservice.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.cacheservice.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.cacheservice.readinessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.cacheservice.readinessProbe.successThreshold }}
+          failureThreshold: {{ .Values.cacheservice.readinessProbe.failureThreshold }}
+        {{- end }}
 
         {{- if .Values.cacheservice.resources }}
         resources: {{ toYaml .Values.cacheservice.resources | nindent 10 }}

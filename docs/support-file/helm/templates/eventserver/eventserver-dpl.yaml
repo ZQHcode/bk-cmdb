@@ -46,18 +46,28 @@ spec:
         - "--enable-auth"
         - {{ .Values.iam.auth.enabled | quote }}
 
+        {{- if .Values.eventserver.livenessProbe.enabled }}
         livenessProbe:
           httpGet:
-            path: /healthz
+            path: {{ .Values.eventserver.livenessProbe.path }}
             port: {{ .Values.eventserver.port }}
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          initialDelaySeconds: {{ .Values.eventserver.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.eventserver.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.eventserver.livenessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.eventserver.livenessProbe.successThreshold }}
+          failureThreshold: {{ .Values.eventserver.livenessProbe.failureThreshold }}
+        {{- end }}
+        {{- if .Values.eventserver.readinessProbe.enabled }}
         readinessProbe:
           httpGet:
-            path: /healthz
+            path: {{ .Values.eventserver.readinessProbe.path }}
             port: {{ .Values.eventserver.port }}
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          initialDelaySeconds: {{ .Values.eventserver.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.eventserver.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.eventserver.readinessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.eventserver.readinessProbe.successThreshold }}
+          failureThreshold: {{ .Values.eventserver.readinessProbe.failureThreshold }}
+        {{- end }}
 
         {{- if .Values.eventserver.resources }}
         resources: {{ toYaml .Values.eventserver.resources | nindent 10 }}

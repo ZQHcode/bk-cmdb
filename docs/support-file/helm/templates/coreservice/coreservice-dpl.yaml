@@ -43,18 +43,28 @@ spec:
         {{- end }}
         - --v={{ .Values.coreservice.command.logLevel }}
         - --logtostderr={{ .Values.coreservice.command.logToStdErr }}
+        {{- if .Values.coreservice.livenessProbe.enabled }}
         livenessProbe:
           httpGet:
-            path: /healthz
+            path: {{ .Values.coreservice.livenessProbe.path }}
             port: {{ .Values.coreservice.port }}
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          initialDelaySeconds: {{ .Values.coreservice.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.coreservice.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.coreservice.livenessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.coreservice.livenessProbe.successThreshold }}
+          failureThreshold: {{ .Values.coreservice.livenessProbe.failureThreshold }}
+        {{- end }}
+        {{- if .Values.coreservice.readinessProbe.enabled }}
         readinessProbe:
           httpGet:
-            path: /healthz
+            path: {{ .Values.coreservice.readinessProbe.path }}
             port: {{ .Values.coreservice.port }}
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          initialDelaySeconds: {{ .Values.coreservice.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.coreservice.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.coreservice.readinessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.coreservice.readinessProbe.successThreshold }}
+          failureThreshold: {{ .Values.coreservice.readinessProbe.failureThreshold }}
+        {{- end }}
 
         {{- if .Values.coreservice.resources }}
         resources: {{ toYaml .Values.coreservice.resources | nindent 10 }}
