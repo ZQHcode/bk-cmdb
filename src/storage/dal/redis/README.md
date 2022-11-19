@@ -18,7 +18,7 @@ import (
 
 	localRedis "configcenter/src/storage/dal/redis"
 
-	"github.com/go-redis/redis/v7"
+	"github.com/go-redis/redis/v8"
 )
 
 func main() {

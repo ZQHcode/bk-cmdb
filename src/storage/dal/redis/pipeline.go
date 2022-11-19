@@ -13,13 +13,18 @@
 package redis
 
 import (
-	"github.com/go-redis/redis/v7"
+	"context"
+
+	"github.com/go-redis/redis/v8"
 )
 
 // Pipeliner is interface for redis pipeline technique
 type Pipeliner interface {
 	redis.StatefulCmdable
+	Len() int
+	Do(ctx context.Context, args ...interface{}) *redis.Cmd
+	Process(ctx context.Context, cmd redis.Cmder) error
 	Close() error
 	Discard() error
-	Exec() ([]redis.Cmder, error)
+	Exec(ctx context.Context) ([]redis.Cmder, error)
 }
