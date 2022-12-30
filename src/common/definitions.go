@@ -1177,7 +1177,7 @@ const (
 	AttributeNameMaxLength        = 128
 	AttributeUnitMaxLength        = 20
 	AttributeOptionValueMaxLength = 128
-	AttributeOptionArrayMaxLength = 200
+	AttributeOptionArrayMaxLength = 2000
 	ServiceCategoryMaxLength      = 128
 )
 
