@@ -16,7 +16,7 @@
   import { v4 as uuidv4 } from 'uuid'
   import { t } from '@/i18n'
   import { $bkInfo, $error } from '@/magicbox'
-  import { swapItem, escapeRegexChar } from '@/utils/util'
+  import { swapItem } from '@/utils/util'
   import GridLayout from '@/components/ui/other/grid-layout.vue'
   import GridItem from '@/components/ui/other/grid-item.vue'
   import FieldGrid from '@/components/model-manage/field-grid.vue'
@@ -29,7 +29,6 @@
   import UniqueManageDrawer from './unique-manage-drawer.vue'
   import useField, { unwrapData, excludeFieldType, isFieldExist } from './use-field'
   import useUnique, { singleRuleTypes, unionRuleTypes } from './use-unique'
-  import RouterQuery from '@/router/query'
 
   const props = defineProps({
     fieldList: {
@@ -67,7 +66,6 @@
   const uniqueLocalList = ref([])
 
   const settingFormComp = ref(null)
-  const modelFormComp = ref(null)
   const uniqueManageComp = ref(null)
   const uniqueTypeComp = ref(null)
 
@@ -94,19 +92,12 @@
   })
 
   const uniqueDrawerOpen = ref(false)
-  const stuff = ref({ type: 'default' })
 
   watchEffect(() => {
     const fieldList = cloneDeep(props.fieldList || [])
     fieldLocalList.value = fieldList.map(unwrapData)
     uniqueLocalList.value = cloneDeep(props.uniqueList || [])
-    const { action } = query?.value ?? {}
-    if (action === 'openUnqiueDrawer') {
-      handleOpenUnqiueDrawer()
-    }
   })
-
-  const query = computed(() => RouterQuery.getAll())
 
   // 只有字段属性的列表
   const pureFieldList = computed(() => fieldLocalList.value.map(item => item.field))
@@ -114,11 +105,9 @@
   const filterWord = ref('')
   const displayFieldLocalList = computed(() => {
     if (filterWord.value) {
-      stuff.value.type = 'search'
-      const reg = new RegExp(escapeRegexChar(filterWord.value), 'i')
+      const reg = new RegExp(filterWord.value, 'i')
       return fieldLocalList.value.filter(item => reg.test(item.field.bk_property_name))
     }
-    stuff.value.type = 'default'
     return fieldLocalList.value
   })
 
@@ -183,7 +172,7 @@
       extra: slider.curFieldSetting
     }
     fieldLocalList.value.push(data)
-    syncField()
+
     return data
   }
   const updateField = (id, fieldData) => {
@@ -243,7 +232,7 @@
   }
 
   const handleFieldSave = async (id, fieldData) => {
-    if (isFieldExist(fieldData, [...fieldLocalList.value, ...removedFieldList.value], id)) {
+    if (!id && isFieldExist(fieldData, [...fieldLocalList.value, ...removedFieldList.value])) {
       $error(t('字段已在模板中存在，无法添加'))
       return
     }
@@ -414,33 +403,28 @@
     slider.uniqueEnabled = false
     slider.uniqueType = UNIUQE_TYPES.SINGLE
   }
-  const beforeCloseDialog = () => new Promise((resolve) => {
-    $bkInfo({
-      title: t('确认退出'),
-      subTitle: t('退出会导致未保存信息丢失'),
-      extCls: 'bk-dialog-sub-header-center',
-      confirmFn: () => {
-        sliderClose()
-        resolve(true)
-      },
-      cancelFn: () => {
-        resolve(false)
-      }
-    })
-  })
-
   const handleSettingSliderBeforeClose = () => {
     const hasChanged = Object.keys(settingFormComp.value.changedValues).length
     if (hasChanged) {
-      return beforeCloseDialog()
+      return new Promise((resolve) => {
+        $bkInfo({
+          title: t('确认退出'),
+          subTitle: t('退出会导致未保存信息丢失'),
+          extCls: 'bk-dialog-sub-header-center',
+          confirmFn: () => {
+            sliderClose()
+            resolve(true)
+          },
+          cancelFn: () => {
+            resolve(false)
+          }
+        })
+      })
     }
     sliderClose()
     return true
   }
   const handleImportSliderBeforeClose = () => {
-    if (modelFormComp.value?.selectedModelId) {
-      return beforeCloseDialog()
-    }
     sliderClose()
     return true
   }
@@ -452,10 +436,6 @@
   }
   const handleUniqueDrawerClose = () => {
     uniqueDrawerOpen.value = false
-  }
-  const handleClearFilter = () => {
-    stuff.value.type = 'default'
-    filterWord.value = ''
   }
 </script>
 
@@ -672,7 +652,6 @@
         <model-field-selector
           v-else-if="slider.view === sliderViews.MODEL_FIELD_SELECTOR"
           :template-field-list="pureFieldList"
-          ref="modelFormComp"
           @confirm="handleImportSave"
           @cancel="handleImportSliderBeforeClose">
         </model-field-selector>
@@ -688,31 +667,23 @@
       @change-unique="handleChangeUnique">
     </unique-manage-drawer>
 
-
-    <cmdb-table-empty
-      v-if="!displayFieldLocalList.length"
-      slot="empty"
-      :stuff="stuff"
-      :auth="{ type: $OPERATION.C_FIELD_TEMPLATE }"
-      @clear="handleClearFilter">
-      <bk-exception class="empty-set" type="empty" scene="part">
-        <i18n path="尚未创建字段">
-          <template #link>
-            <cmdb-auth :auth="{ type: $OPERATION.C_FIELD_TEMPLATE }">
-              <template #default="{ disabled }">
-                <bk-button
-                  text
-                  theme="primary"
-                  :disabled="disabled"
-                  @click="handleAddField">
-                  {{$t('立即创建')}}
-                </bk-button>
-              </template>
-            </cmdb-auth>
-          </template>
-        </i18n>
-      </bk-exception>
-    </cmdb-table-empty>
+    <bk-exception class="empty-set" type="empty" scene="part" v-if="!fieldLocalList.length">
+      <i18n path="尚未创建字段">
+        <template #link>
+          <cmdb-auth :auth="{ type: $OPERATION.C_FIELD_TEMPLATE }">
+            <template #default="{ disabled }">
+              <bk-button
+                text
+                theme="primary"
+                :disabled="disabled"
+                @click="handleAddField">
+                {{$t('立即创建')}}
+              </bk-button>
+            </template>
+          </cmdb-auth>
+        </template>
+      </i18n>
+    </bk-exception>
   </div>
 </template>
 

@@ -15,6 +15,7 @@
     <div class="options-left fl">
       <template v-if="scope === 1">
         <cmdb-auth class="mr10"
+          :ignore="!activeDirectory"
           :auth="[
             { type: $OPERATION.C_RESOURCE_HOST, relation: [directoryId] },
             { type: $OPERATION.U_RESOURCE_HOST, relation: [directoryId] }
@@ -219,8 +220,7 @@
         if (this.activeDirectory) {
           return this.activeDirectory.bk_module_id
         }
-        // 默认会导入到空闲机目录
-        return this.defaultDirectory?.bk_module_id
+        return undefined
       },
       table() {
         return this.$parent.table
@@ -704,7 +704,6 @@
           fileTips: this.$t('导入文件大小提示'),
           submit: (options) => {
             const params = {
-              bk_module_id: this.directoryId,
               op: options.step
             }
             if (options.importRelation) {

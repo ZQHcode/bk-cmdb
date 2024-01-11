@@ -28,16 +28,15 @@ import (
 )
 
 // BatchCreateNode batch create node
-func (st *Kube) BatchCreateNode(ctx context.Context, header http.Header, data *types.CreateNodesOption) ([]int64,
-	errors.CCErrorCoder) {
-
+func (st *Kube) BatchCreateNode(ctx context.Context, header http.Header, bizID int64,
+	data *types.CreateNodesOption) ([]int64, errors.CCErrorCoder) {
 	ret := new(types.CreateNodesRsp)
-	subPath := "/createmany/kube/node"
+	subPath := "/createmany/kube/node/bk_biz_id/%d"
 
 	err := st.client.Post().
 		WithContext(ctx).
 		Body(data).
-		SubResourcef(subPath).
+		SubResourcef(subPath, bizID).
 		WithHeaders(header).
 		Do().
 		Into(ret)
@@ -53,9 +52,8 @@ func (st *Kube) BatchCreateNode(ctx context.Context, header http.Header, data *t
 }
 
 // BatchCreatePod batch create pod.
-func (st *Kube) BatchCreatePod(ctx context.Context, header http.Header, data *types.CreatePodsOption) ([]int64,
-	errors.CCErrorCoder) {
-
+func (st *Kube) BatchCreatePod(ctx context.Context, header http.Header,
+	data *types.CreatePodsOption) ([]int64, errors.CCErrorCoder) {
 	ret := new(types.CreatePodsRsp)
 	subPath := "/createmany/kube/pod"
 
@@ -79,16 +77,15 @@ func (st *Kube) BatchCreatePod(ctx context.Context, header http.Header, data *ty
 }
 
 // SearchCluster search cluster.
-func (st *Kube) SearchCluster(ctx context.Context, header http.Header, input *types.QueryClusterOption) (
+func (st *Kube) SearchCluster(ctx context.Context, header http.Header, bizID int64, input *types.QueryClusterOption) (
 	*metadata.Response, errors.CCErrorCoder) {
-
 	ret := new(metadata.Response)
 
-	subPath := "/findmany/kube/cluster"
+	subPath := "/findmany/kube/cluster/bk_biz_id/%d"
 	err := st.client.Post().
 		WithContext(ctx).
 		Body(input).
-		SubResourcef(subPath).
+		SubResourcef(subPath, bizID).
 		WithHeaders(header).
 		Do().
 		Into(&ret)
@@ -103,16 +100,15 @@ func (st *Kube) SearchCluster(ctx context.Context, header http.Header, input *ty
 }
 
 // SearchNode search node.
-func (st *Kube) SearchNode(ctx context.Context, header http.Header, input *types.QueryNodeOption) (
+func (st *Kube) SearchNode(ctx context.Context, header http.Header, bizID int64, input *types.QueryNodeOption) (
 	*metadata.Response, errors.CCErrorCoder) {
-
 	ret := new(metadata.Response)
 
-	subPath := "/findmany/kube/node"
+	subPath := "/findmany/kube/node/bk_biz_id/%d"
 	err := st.client.Post().
 		WithContext(ctx).
 		Body(input).
-		SubResourcef(subPath).
+		SubResourcef(subPath, bizID).
 		WithHeaders(header).
 		Do().
 		Into(&ret)
@@ -127,61 +123,58 @@ func (st *Kube) SearchNode(ctx context.Context, header http.Header, input *types
 }
 
 // UpdateNodeFields update node fields.
-func (st *Kube) UpdateNodeFields(ctx context.Context, header http.Header,
-	data *types.UpdateNodeOption) errors.CCErrorCoder {
-
+func (st *Kube) UpdateNodeFields(ctx context.Context, header http.Header, bizID int64,
+	data *types.UpdateNodeOption) (*metadata.Response, errors.CCErrorCoder) {
 	ret := new(metadata.Response)
-	subPath := "/updatemany/kube/node"
+	subPath := "/updatemany/kube/node/bk_biz_id/%d"
 	err := st.client.Put().
 		WithContext(ctx).
 		Body(data).
-		SubResourcef(subPath).
+		SubResourcef(subPath, bizID).
 		WithHeaders(header).
 		Do().
 		Into(ret)
 
 	if err != nil {
-		return errors.CCHttpError
+		return nil, errors.CCHttpError
 	}
 	if ret.CCError() != nil {
-		return ret.CCError()
+		return nil, ret.CCError()
 	}
-	return nil
+	return ret, nil
 }
 
 // UpdateClusterFields update cluster fields.
-func (st *Kube) UpdateClusterFields(ctx context.Context, header http.Header,
-	data *types.UpdateClusterOption) errors.CCErrorCoder {
-
+func (st *Kube) UpdateClusterFields(ctx context.Context, header http.Header, bizID int64,
+	data *types.UpdateClusterOption) (*metadata.Response, errors.CCErrorCoder) {
 	ret := new(metadata.Response)
-	subPath := "/updatemany/kube/cluster"
+	subPath := "/updatemany/kube/cluster/bk_biz_id/%d"
 	err := st.client.Put().
 		WithContext(ctx).
 		Body(data).
-		SubResourcef(subPath).
+		SubResourcef(subPath, bizID).
 		WithHeaders(header).
 		Do().
 		Into(ret)
 
 	if err != nil {
-		return errors.CCHttpError
+		return nil, errors.CCHttpError
 	}
 	if ret.CCError() != nil {
-		return ret.CCError()
+		return nil, ret.CCError()
 	}
-	return nil
+	return ret, nil
 }
 
 // CreateCluster create cluster.
-func (st *Kube) CreateCluster(ctx context.Context, header http.Header,
+func (st *Kube) CreateCluster(ctx context.Context, header http.Header, bizID int64,
 	data *types.Cluster) (int64, errors.CCErrorCoder) {
-
 	ret := new(types.CreateClusterRsp)
-	subPath := "/create/kube/cluster"
+	subPath := "/create/kube/cluster/bk_biz_id/%d"
 	err := st.client.Post().
 		WithContext(ctx).
 		Body(data).
-		SubResourcef(subPath).
+		SubResourcef(subPath, bizID).
 		WithHeaders(header).
 		Do().
 		Into(ret)
@@ -197,59 +190,57 @@ func (st *Kube) CreateCluster(ctx context.Context, header http.Header,
 }
 
 // DeleteCluster delete cluster.
-func (st *Kube) DeleteCluster(ctx context.Context, header http.Header,
-	option *types.DeleteClusterOption) errors.CCErrorCoder {
-
+func (st *Kube) DeleteCluster(ctx context.Context, header http.Header, bizID int64,
+	option *types.DeleteClusterOption) (*metadata.Response, errors.CCErrorCoder) {
 	ret := new(metadata.Response)
-	subPath := "/delete/kube/cluster"
+	subPath := "/delete/kube/cluster/bk_biz_id/%d"
 
 	err := st.client.Delete().
 		WithContext(ctx).
 		Body(option).
-		SubResourcef(subPath).
+		SubResourcef(subPath, bizID).
 		WithHeaders(header).
 		Do().
 		Into(ret)
 
 	if err != nil {
-		return errors.CCHttpError
+		return nil, errors.CCHttpError
 	}
 
 	if ret.CCError() != nil {
-		return ret.CCError()
+		return nil, ret.CCError()
 	}
 
-	return nil
+	return ret, nil
 }
 
 // BatchDeleteNode delete node.
-func (st *Kube) BatchDeleteNode(ctx context.Context, header http.Header,
-	option *types.BatchDeleteNodeOption) errors.CCErrorCoder {
-
+func (st *Kube) BatchDeleteNode(ctx context.Context, header http.Header, bizID int64,
+	option *types.BatchDeleteNodeOption) (*metadata.Response, errors.CCErrorCoder) {
 	ret := new(metadata.Response)
-	subPath := "/deletemany/kube/node"
+	subPath := "/deletemany/kube/node/bk_biz_id/%d"
 
 	err := st.client.Delete().
 		WithContext(ctx).
 		Body(option).
-		SubResourcef(subPath).
+		SubResourcef(subPath, bizID).
 		WithHeaders(header).
 		Do().
 		Into(ret)
 
 	if err != nil {
-		return errors.CCHttpError
+		return nil, errors.CCHttpError
 	}
 
 	if ret.CCError() != nil {
-		return ret.CCError()
+		return nil, ret.CCError()
 	}
 
-	return nil
+	return ret, nil
 }
 
 // CreateNamespace create namespace
-func (st *Kube) CreateNamespace(ctx context.Context, header http.Header,
+func (st *Kube) CreateNamespace(ctx context.Context, header http.Header, bizID int64,
 	option *types.NsCreateOption) (*metadata.RspIDs, errors.CCErrorCoder) {
 
 	result := new(types.NsCreateResp)
@@ -257,7 +248,7 @@ func (st *Kube) CreateNamespace(ctx context.Context, header http.Header,
 	err := st.client.Post().
 		WithContext(ctx).
 		Body(option).
-		SubResourcef("/createmany/kube/namespace").
+		SubResourcef("/createmany/kube/namespace/bk_biz_id/%d", bizID).
 		WithHeaders(header).
 		Do().
 		Into(result)
@@ -274,7 +265,7 @@ func (st *Kube) CreateNamespace(ctx context.Context, header http.Header,
 }
 
 // UpdateNamespace update namespace
-func (st *Kube) UpdateNamespace(ctx context.Context, header http.Header,
+func (st *Kube) UpdateNamespace(ctx context.Context, header http.Header, bizID int64,
 	option *types.NsUpdateOption) errors.CCErrorCoder {
 
 	result := new(metadata.BaseResp)
@@ -282,7 +273,7 @@ func (st *Kube) UpdateNamespace(ctx context.Context, header http.Header,
 	err := st.client.Put().
 		WithContext(ctx).
 		Body(option).
-		SubResourcef("/updatemany/kube/namespace").
+		SubResourcef("/updatemany/kube/namespace/bk_biz_id/%d", bizID).
 		WithHeaders(header).
 		Do().
 		Into(result)
@@ -299,7 +290,7 @@ func (st *Kube) UpdateNamespace(ctx context.Context, header http.Header,
 }
 
 // DeleteNamespace delete namespace
-func (st *Kube) DeleteNamespace(ctx context.Context, header http.Header,
+func (st *Kube) DeleteNamespace(ctx context.Context, header http.Header, bizID int64,
 	option *types.NsDeleteOption) errors.CCErrorCoder {
 
 	result := new(metadata.BaseResp)
@@ -307,7 +298,7 @@ func (st *Kube) DeleteNamespace(ctx context.Context, header http.Header,
 	err := st.client.Delete().
 		WithContext(ctx).
 		Body(option).
-		SubResourcef("/deletemany/kube/namespace").
+		SubResourcef("/deletemany/kube/namespace/bk_biz_id/%d", bizID).
 		WithHeaders(header).
 		Do().
 		Into(result)
@@ -324,7 +315,7 @@ func (st *Kube) DeleteNamespace(ctx context.Context, header http.Header,
 }
 
 // ListNamespace list namespace
-func (st *Kube) ListNamespace(ctx context.Context, header http.Header, option *types.NsQueryOption) (
+func (st *Kube) ListNamespace(ctx context.Context, header http.Header, bizID int64, option *types.NsQueryOption) (
 	*metadata.InstDataInfo, errors.CCErrorCoder) {
 
 	result := new(metadata.ResponseInstData)
@@ -332,7 +323,7 @@ func (st *Kube) ListNamespace(ctx context.Context, header http.Header, option *t
 	err := st.client.Post().
 		WithContext(ctx).
 		Body(option).
-		SubResourcef("/findmany/kube/namespace").
+		SubResourcef("/findmany/kube/namespace/bk_biz_id/%d", bizID).
 		WithHeaders(header).
 		Do().
 		Into(result)
@@ -349,7 +340,7 @@ func (st *Kube) ListNamespace(ctx context.Context, header http.Header, option *t
 }
 
 // CreateWorkload create workload
-func (st *Kube) CreateWorkload(ctx context.Context, header http.Header, kind types.WorkloadType,
+func (st *Kube) CreateWorkload(ctx context.Context, header http.Header, bizID int64, kind types.WorkloadType,
 	option *types.WlCreateOption) (*metadata.RspIDs, errors.CCErrorCoder) {
 
 	result := new(types.WlCreateResp)
@@ -357,7 +348,7 @@ func (st *Kube) CreateWorkload(ctx context.Context, header http.Header, kind typ
 	err := st.client.Post().
 		WithContext(ctx).
 		Body(option).
-		SubResourcef("/createmany/kube/workload/%s", kind).
+		SubResourcef("/createmany/kube/workload/%s/%d", kind, bizID).
 		WithHeaders(header).
 		Do().
 		Into(result)
@@ -374,14 +365,14 @@ func (st *Kube) CreateWorkload(ctx context.Context, header http.Header, kind typ
 }
 
 // UpdateWorkload update workload
-func (st *Kube) UpdateWorkload(ctx context.Context, header http.Header, kind types.WorkloadType,
+func (st *Kube) UpdateWorkload(ctx context.Context, header http.Header, bizID int64, kind types.WorkloadType,
 	option *types.WlUpdateOption) errors.CCErrorCoder {
 	result := new(metadata.BaseResp)
 
 	err := st.client.Put().
 		WithContext(ctx).
 		Body(option).
-		SubResourcef("/updatemany/kube/workload/%s", kind).
+		SubResourcef("/updatemany/kube/workload/%s/%d", kind, bizID).
 		WithHeaders(header).
 		Do().
 		Into(result)
@@ -398,14 +389,14 @@ func (st *Kube) UpdateWorkload(ctx context.Context, header http.Header, kind typ
 }
 
 // DeleteWorkload delete workload
-func (st *Kube) DeleteWorkload(ctx context.Context, header http.Header, kind types.WorkloadType,
+func (st *Kube) DeleteWorkload(ctx context.Context, header http.Header, bizID int64, kind types.WorkloadType,
 	option *types.WlDeleteOption) errors.CCErrorCoder {
 	result := new(metadata.BaseResp)
 
 	err := st.client.Delete().
 		WithContext(ctx).
 		Body(option).
-		SubResourcef("/deletemany/kube/workload/%s", kind).
+		SubResourcef("/deletemany/kube/workload/%s/%d", kind, bizID).
 		WithHeaders(header).
 		Do().
 		Into(result)
@@ -422,7 +413,7 @@ func (st *Kube) DeleteWorkload(ctx context.Context, header http.Header, kind typ
 }
 
 // ListWorkload list workload
-func (st *Kube) ListWorkload(ctx context.Context, header http.Header, kind types.WorkloadType,
+func (st *Kube) ListWorkload(ctx context.Context, header http.Header, bizID int64, kind types.WorkloadType,
 	option *types.WlQueryOption) (*metadata.InstDataInfo, errors.CCErrorCoder) {
 
 	result := new(metadata.ResponseInstData)
@@ -430,7 +421,7 @@ func (st *Kube) ListWorkload(ctx context.Context, header http.Header, kind types
 	err := st.client.Post().
 		WithContext(ctx).
 		Body(option).
-		SubResourcef("/findmany/kube/workload/%s", kind).
+		SubResourcef("/findmany/kube/workload/%s/%d", kind, bizID).
 		WithHeaders(header).
 		Do().
 		Into(result)
@@ -447,7 +438,7 @@ func (st *Kube) ListWorkload(ctx context.Context, header http.Header, kind types
 }
 
 // ListPod list pod
-func (st *Kube) ListPod(ctx context.Context, header http.Header, option *types.PodQueryOption) (
+func (st *Kube) ListPod(ctx context.Context, header http.Header, bizID int64, option *types.PodQueryOption) (
 	*metadata.InstDataInfo, errors.CCErrorCoder) {
 
 	result := new(metadata.ResponseInstData)
@@ -455,7 +446,7 @@ func (st *Kube) ListPod(ctx context.Context, header http.Header, option *types.P
 	err := st.client.Post().
 		WithContext(ctx).
 		Body(option).
-		SubResourcef("/findmany/kube/pod").
+		SubResourcef("/findmany/kube/pod/bk_biz_id/%d", bizID).
 		WithHeaders(header).
 		Do().
 		Into(result)
@@ -472,7 +463,7 @@ func (st *Kube) ListPod(ctx context.Context, header http.Header, option *types.P
 }
 
 // ListContainer list container
-func (st *Kube) ListContainer(ctx context.Context, header http.Header,
+func (st *Kube) ListContainer(ctx context.Context, header http.Header, bizID int64,
 	option *types.ContainerQueryOption) (*metadata.InstDataInfo, errors.CCErrorCoder) {
 
 	result := new(metadata.ResponseInstData)
@@ -480,7 +471,7 @@ func (st *Kube) ListContainer(ctx context.Context, header http.Header,
 	err := st.client.Post().
 		WithContext(ctx).
 		Body(option).
-		SubResourcef("/findmany/kube/container").
+		SubResourcef("/findmany/kube/container/bk_biz_id/%d", bizID).
 		WithHeaders(header).
 		Do().
 		Into(result)
@@ -522,7 +513,7 @@ func (st *Kube) FindNodePathForHost(ctx context.Context, header http.Header, opt
 }
 
 // FindPodPath find pod path
-func (st *Kube) FindPodPath(ctx context.Context, header http.Header, option *types.PodPathOption) (
+func (st *Kube) FindPodPath(ctx context.Context, header http.Header, bizID int64, option *types.PodPathOption) (
 	*types.PodPathData, errors.CCErrorCoder) {
 
 	result := new(types.PodPathResp)
@@ -530,7 +521,7 @@ func (st *Kube) FindPodPath(ctx context.Context, header http.Header, option *typ
 	err := st.client.Post().
 		WithContext(ctx).
 		Body(option).
-		SubResourcef("/find/kube/pod_path").
+		SubResourcef("/find/kube/pod_path/bk_biz_id/%d", bizID).
 		WithHeaders(header).
 		Do().
 		Into(result)

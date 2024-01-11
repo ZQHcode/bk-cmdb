@@ -1,7 +1,6 @@
 <script>
   import { computed, defineComponent, ref, watch, watchEffect } from 'vue'
   import store from '@/store'
-  import { t } from '@/i18n'
   import routerActions from '@/router/actions'
   import RouterQuery from '@/router/query'
   import DetailsGeneralLayout from '@/components/ui/details/general-layout.vue'
@@ -69,8 +68,6 @@
           ids: [podId.value]
         })
         topoPaths.value = info
-
-        store.commit('setTitle', `${t('Container详情')}【${instance.value?.name}】`)
       })
 
       const topologyList = computed(() => topoPaths.value.map(topo => ({

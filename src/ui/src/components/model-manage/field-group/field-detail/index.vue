@@ -197,7 +197,6 @@
       <div class="btn-group" :class="{ 'is-sticky': sticky }">
         <bk-button theme="primary"
           :loading="$loading(['updateObjectAttribute', 'createObjectAttribute'])"
-          :disabled="saveDisabled"
           @click="saveField">
           <span v-if="!isSettingScene">{{isEditField ? $t('保存') : $t('提交')}}</span>
           <span v-else>{{ $t('确定') }}</span>
@@ -335,9 +334,6 @@
         const [topRoute] = this.$route.matched
         return topRoute ? topRoute.name !== MENU_BUSINESS : true
       },
-      saveDisabled() {
-        return !this.isSettingScene && this.isEditField && !this.isChanged?.value
-      },
       fieldType() {
         let { bk_property_type: type } = this.fieldInfo
         switch (type) {
@@ -470,9 +466,9 @@
       if (this.isEditField) {
         this.initData()
       }
-      const { beforeClose, isChanged } = useSideslider(this.fieldInfo)
+
+      const { beforeClose } = useSideslider(this.fieldInfo)
       this.beforeClose = beforeClose
-      this.isChanged = isChanged
     },
     methods: {
       ...mapActions('objectModelProperty', [
@@ -543,7 +539,7 @@
         }
         const defaultGroupld = this.isGlobalView ? 'default' : 'bizdefault'
         const groupId =  this.fieldInfo.bk_property_group || defaultGroupld
-        const activeObjId = this.$route.params.modelId || this.customObjId
+        const activeObjId = this.activeModel.bk_obj_id
         if (this.isEditField) {
           const action = this.customObjId ? 'updateBizObjectAttribute' : 'updateObjectAttribute'
           let params = this.field.ispre ? this.getPreFieldUpdateParams() : this.fieldInfo
@@ -556,10 +552,7 @@
           if (!this.isGlobalView) {
             params.bk_biz_id = this.bizId
           }
-          // 是否调用编辑字段接口
           const paramsLen = Object.keys(params).length
-          // 是否调用修改字段分组接口
-          const isChangeGroupId = groupId !== this.group.bk_group_id
           if (paramsLen) {
             await this[action]({
               bizId: this.bizId,
@@ -572,31 +565,27 @@
               fieldId = this.fieldInfo.bk_property_id
               this.$http.cancel(`post_searchObjectAttribute_${activeObjId}`)
               this.$http.cancelCache('getHostPropertyList')
-            })
-          }
-          if (isChangeGroupId) {
-            // 每次都查询出最后一个元素的index
-            const toLastIndex = this.properties.
-              filter(property => property.bk_property_group === groupId)?.at(-1)?.bk_property_index
-              ?? -1
-            // 修改分组
-            await this.updatePropertySort({
-              objId: activeObjId,
-              propertyId: this.field.id,
-              params: {
-                bk_biz_id: params.bk_biz_id,
-                bk_property_group: groupId,
-                bk_property_index: toLastIndex + 1
-              },
-              config: {
-                requestId: `updatePropertySort_${activeObjId}`
-              }
-            }).then(() => {
               this.$success(this.$t('修改成功'))
             })
-          } else {
-            this.$success(this.$t('修改成功'))
           }
+
+          // 修改分组
+          await this.updatePropertySort({
+            objId: activeObjId,
+            propertyId: this.field.id,
+            params: {
+              bk_property_group: groupId,
+              bk_property_index: this.properties
+                .filter(property => property.bk_property_group === groupId)?.length ?? 0
+            },
+            config: {
+              requestId: `updatePropertySort_${activeObjId}`
+            }
+          }).then(() => {
+            if (!paramsLen) {
+              this.$success(this.$t('修改成功'))
+            }
+          })
         } else {
           if (isEmptyPropertyValue(this.fieldInfo.default)) {
             Reflect.deleteProperty(this.fieldInfo, 'default')

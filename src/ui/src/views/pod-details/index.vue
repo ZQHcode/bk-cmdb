@@ -1,7 +1,6 @@
 <script>
   import { computed, defineComponent, ref, watch, watchEffect } from 'vue'
   import store from '@/store'
-  import { t } from '@/i18n'
   import routerActions from '@/router/actions'
   import RouterQuery from '@/router/query'
   import DetailsGeneralLayout from '@/components/ui/details/general-layout.vue'
@@ -29,7 +28,6 @@
 
       const route = computed(() => RouterQuery.route)
       const active = ref(RouterQuery.get('tab', 'property'))
-      const sourceNode = ref(RouterQuery.get('node'))
 
       const bizId = computed(() => store.getters['objectBiz/bizId'])
       const podId = computed(() => parseInt(route.value.params.podId, 10))
@@ -66,8 +64,6 @@
           ids: [podId.value]
         })
         topoPaths.value = info
-
-        store.commit('setTitle', `${t('Pod详情')}【${instance.value?.name}】`)
       })
 
       const topologyList = computed(() => topoPaths.value.map(topo => ({
@@ -80,24 +76,16 @@
       })
 
       const handlePathClick = (path) => {
-        // 当前业务的拓扑并且来源的节点与路径的叶子节点一致，则可以直接返回
-        if (path.bk_biz_id === bizId.value && `${path.kind}-${path.bk_workload_id}` === sourceNode.value) {
-          routerActions.back()
-          return
-        }
-
         routerActions.redirect({
           name: MENU_BUSINESS_HOST_AND_SERVICE,
           query: {
-            tab: 'podList',
             node: `${path.kind}-${path.bk_workload_id}`,
             topo_path: `cluster-${path.bk_cluster_id},namespace-${path.bk_namespace_id},${path.kind}-${path.bk_workload_id}`
           },
           params: {
-            // 共享集群使用数据中的业务ID，而非当前业务
-            bizId: path.bk_biz_id ?? bizId.value
+            bizId: bizId.value
           },
-          reload: true
+          history: true
         })
       }
 

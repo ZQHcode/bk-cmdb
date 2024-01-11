@@ -86,19 +86,11 @@ type HostNodeRelation struct {
 
 // PodPathOption pod path request
 type PodPathOption struct {
-	BizID  int64   `json:"bk_biz_id"`
 	PodIDs []int64 `json:"ids"`
 }
 
 // Validate validate PodPathReq
 func (p *PodPathOption) Validate() ccErr.RawErrorInfo {
-	if p.BizID == 0 {
-		return ccErr.RawErrorInfo{
-			ErrCode: common.CCErrCommParamsNeedSet,
-			Args:    []interface{}{common.BKAppIDField},
-		}
-	}
-
 	if len(p.PodIDs) == 0 {
 		return ccErr.RawErrorInfo{
 			ErrCode: common.CCErrCommParamsNeedSet,
@@ -128,7 +120,6 @@ type PodPathData struct {
 
 // PodPath pod container topological path
 type PodPath struct {
-	BizID        int64        `json:"bk_biz_id"`
 	BizName      string       `json:"biz_name"`
 	ClusterID    int64        `json:"bk_cluster_id"`
 	ClusterName  string       `json:"cluster_name"`
@@ -152,18 +143,11 @@ type KubeResourceInfo struct {
 
 // KubeTopoCountOption calculate the number of hosts or pods under the container resource node.
 type KubeTopoCountOption struct {
-	BizID         int64              `json:"bk_biz_id"`
 	ResourceInfos []KubeResourceInfo `json:"resource_info"`
 }
 
 // Validate validate the KubeTopoCountOption
 func (option *KubeTopoCountOption) Validate() ccErr.RawErrorInfo {
-	if option.BizID == 0 {
-		return ccErr.RawErrorInfo{
-			ErrCode: common.CCErrCommParamsNeedSet,
-			Args:    []interface{}{common.BKAppIDField},
-		}
-	}
 
 	if len(option.ResourceInfos) == 0 {
 		return ccErr.RawErrorInfo{
@@ -197,7 +181,6 @@ type KubeTopoCountRsp struct {
 
 // KubeTopoPathOption get container topology path request.
 type KubeTopoPathOption struct {
-	BizID          int64             `json:"bk_biz_id"`
 	ReferenceObjID string            `json:"bk_reference_obj_id"`
 	ReferenceID    int64             `json:"bk_reference_id"`
 	Page           metadata.BasePage `json:"page"`
@@ -205,12 +188,6 @@ type KubeTopoPathOption struct {
 
 // Validate validate the KubeTopoPathOption
 func (option *KubeTopoPathOption) Validate() ccErr.RawErrorInfo {
-	if option.BizID == 0 {
-		return ccErr.RawErrorInfo{
-			ErrCode: common.CCErrCommParamsNeedSet,
-			Args:    []interface{}{common.BKAppIDField},
-		}
-	}
 
 	if option.ReferenceID == 0 {
 		return ccErr.RawErrorInfo{

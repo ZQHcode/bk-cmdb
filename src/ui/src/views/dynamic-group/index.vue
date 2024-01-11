@@ -100,7 +100,7 @@
           slot="empty"
           :stuff="table.stuff"
           :auth="{ type: $OPERATION.C_CUSTOM_QUERY, relation: [bizId] }"
-          @create="() => handleCreate('create')"
+          @create="handleCreate"
           @clear="handleClearFilter">
         </cmdb-table-empty>
       </bk-table>
@@ -139,14 +139,11 @@
       ...mapGetters('objectModelClassify', ['getModelById'])
     },
     created() {
-      this.unwatchQuery = RouterQuery.watch('*', ({ page, limit, sort, filter, action }) => {
+      this.unwatchQuery = RouterQuery.watch('*', ({ page, limit, sort, filter }) => {
         this.table.pagination.current = parseInt(page || this.table.pagination.current, 10)
         this.table.pagination.limit = parseInt(limit || this.table.pagination.limit, 10)
         this.table.sort = sort || this.table.sort
         this.filter = filter
-        if (action === 'create') {
-          this.handleCreate()
-        }
         this.getList()
       }, { immediate: true })
       this.unwatchFilter = this.$watch(() => this.filter, (filter) => {
@@ -196,10 +193,7 @@
           }
         }
       },
-      handleCreate(type = '') {
-        if (type) {
-          RouterQuery.set({ action: 'create' })
-        }
+      handleCreate() {
         DynamicGroupForm.show({
           title: this.$t('新建动态分组')
         })

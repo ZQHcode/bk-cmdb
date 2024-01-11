@@ -118,7 +118,7 @@ func (f *FieldTemplateAttr) ValidateBase() ccErr.RawErrorInfo {
 
 	// because there will be a package import cycle problem,
 	// validate option is in src/source_controller/coreservice/core/model/field_template.go file,
-	// call attrvalid.ValidPropertyOption func
+	// call valid.ValidPropertyOption func
 
 	return ccErr.RawErrorInfo{}
 }

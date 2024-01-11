@@ -186,8 +186,7 @@ func RegistUpgrader(version string, handlerFunc func(context.Context, dal.RDB, *
 }
 
 // RegisterUpgraderWithRedis register upgrader with redis
-func RegisterUpgraderWithRedis(version string,
-	handlerFunc func(context.Context, dal.RDB, redis.Client, *Config) error) {
+func RegisterUpgraderWithRedis(version string, handlerFunc func(context.Context, dal.RDB, redis.Client, *Config) error) {
 	if err := ValidateMigrationVersionFormat(version); err != nil {
 		blog.Fatalf("ValidateMigrationVersionFormat failed, err: %s", err.Error())
 	}
@@ -203,8 +202,7 @@ func RegisterUpgraderWithRedis(version string,
 }
 
 // RegisterUpgraderWithIAM register upgrader with iam
-func RegisterUpgraderWithIAM(version string,
-	handlerFunc func(context.Context, dal.RDB, redis.Client, *iam.IAM, *Config) error) {
+func RegisterUpgraderWithIAM(version string, handlerFunc func(context.Context, dal.RDB, *iam.IAM, *Config) error) {
 	if err := ValidateMigrationVersionFormat(version); err != nil {
 		blog.Fatalf("validate migration version format failed, err: %s", err.Error())
 	}
@@ -213,7 +211,7 @@ func RegisterUpgraderWithIAM(version string,
 	v := Upgrader{
 		version: version,
 		do: func(ctx context.Context, rdb dal.RDB, cache redis.Client, iam *iam.IAM, config *Config) error {
-			return handlerFunc(ctx, rdb, cache, iam, config)
+			return handlerFunc(ctx, rdb, iam, config)
 		},
 	}
 	upgraderPool = append(upgraderPool, v)
@@ -249,8 +247,7 @@ func Upgrade(ctx context.Context, db dal.RDB, cache redis.Client, iam *iam.IAM, 
 		err = v.do(ctx, db, cache, iam, conf)
 		if err != nil {
 			blog.Errorf("upgrade version %s error: %s", v.version, err.Error())
-			return currentVersion, finishedMigrations, fmt.Errorf("run migration %s failed, err: %s", v.version,
-				err.Error())
+			return currentVersion, finishedMigrations, fmt.Errorf("run migration %s failed, err: %s", v.version, err.Error())
 		}
 		cmdbVersion.CurrentVersion = v.version
 		err = saveVersion(ctx, db, cmdbVersion)

@@ -98,7 +98,7 @@
         :stuff="table.stuff"
         :auth="{ type: $OPERATION.C_SET_TEMPLATE, relation: [bizId] }"
         @create="handleCreate"
-        @clear="handleClearFilter"
+        @clear="handleFilterClear"
       ></cmdb-table-empty>
     </bk-table>
   </div>
@@ -106,7 +106,6 @@
 
 <script>
   import { mapGetters } from 'vuex'
-  import RouterQuery from '@/router/query'
   import {
     MENU_BUSINESS_HOST_AND_SERVICE,
     MENU_BUSINESS_SERVICE_TEMPLATE,
@@ -136,10 +135,7 @@
       }
     },
     computed: {
-      ...mapGetters('objectBiz', ['bizId']),
-      query() {
-        return RouterQuery.getAll()
-      },
+      ...mapGetters('objectBiz', ['bizId'])
     },
     watch: {
       originList() {
@@ -147,20 +143,9 @@
       }
     },
     async created() {
-      await this.getQueryList()
+      await this.getSetTemplates()
     },
     methods: {
-      async getQueryList() {
-        const params = this.query
-        const { searchName = '',  sort = '-last_time' } = params
-        this.table.sort = sort
-        this.searchName = searchName
-        await this.getSetTemplates()
-        this.setRoute()
-      },
-      setRoute() {
-        RouterQuery.set({ sort: this.table.sort, searchName: this.searchName })
-      },
       async getSetTemplates() {
         const data = await this.$store.dispatch('setTemplate/getSetTemplates', {
           bizId: this.bizId,
@@ -180,9 +165,6 @@
         }))
         this.list = list
         this.originList = list
-        if (this.searchName) {
-          this.handleFilterTemplate()
-        }
       },
       async getSyncStatus() {
         try {
@@ -237,13 +219,10 @@
           ? originList.filter(template => template.name.indexOf(this.searchName) !== -1)
           : originList
         this.table.stuff.type = this.searchName ? 'search' : 'default'
-        this.setRoute()
       },
       handleClearFilter() {
         this.list = this.originList
         this.table.stuff.type = 'default'
-        this.searchName = ''
-        this.setRoute()
       },
       handleSelectable(row) {
         return !row.set_instance_count
@@ -274,8 +253,6 @@
           return
         }
         this.table.sort = this.$tools.getSort(sort, '-last_time')
-        this.searchName = ''
-        this.setRoute()
         this.getSetTemplates()
       },
       handleGoBusinessTopo() {
@@ -291,7 +268,7 @@
       handleFilterClear() {
         this.searchName = ''
         this.table.stuff.type = 'default'
-        this.setRoute()
+        this.getSetTemplates()
       }
     }
   }

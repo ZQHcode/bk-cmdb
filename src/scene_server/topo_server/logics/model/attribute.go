@@ -31,7 +31,7 @@ import (
 	"configcenter/src/common/mapstruct"
 	"configcenter/src/common/metadata"
 	"configcenter/src/common/util"
-	attrvalid "configcenter/src/common/valid/attribute"
+	"configcenter/src/common/valid"
 )
 
 // AttributeOperationInterface attribute operation methods
@@ -101,25 +101,8 @@ func (a *attribute) getEnumQuoteOption(kit *rest.Kit, option interface{}, isMult
 			common.AttributeOptionArrayMaxLength)
 	}
 
-	quoteObjID, instIDMap, err := a.parseArrOption(kit, option, arrOption)
-	if err != nil {
-		return "", nil, err
-	}
-
-	instIDs := make([]int64, 0)
-	for instID := range instIDMap {
-		instIDs = append(instIDs, instID)
-	}
-
-	return quoteObjID, instIDs, nil
-}
-
-func (a *attribute) parseArrOption(kit *rest.Kit, option interface{}, arrOption []interface{}) (string,
-	map[int64]interface{}, error) {
-
 	var quoteObjID string
 	instIDMap := make(map[int64]interface{}, 0)
-
 	for _, o := range arrOption {
 		mapOption, ok := o.(map[string]interface{})
 		if !ok || mapOption == nil {
@@ -172,7 +155,12 @@ func (a *attribute) parseArrOption(kit *rest.Kit, option interface{}, arrOption 
 		}
 	}
 
-	return quoteObjID, instIDMap, nil
+	instIDs := make([]int64, 0)
+	for instID := range instIDMap {
+		instIDs = append(instIDs, instID)
+	}
+
+	return quoteObjID, instIDs, nil
 }
 
 // enumQuoteCanNotUseModel 校验引用模型不能为集群、模块、进程、容器、自定义层级相关模型
@@ -378,12 +366,10 @@ func (a *attribute) ValidTableAttrDefaultValue(kit *rest.Kit, defaultValue []map
 	// value according to the attributes of the header.
 	for _, value := range defaultValue {
 		for k, v := range value {
-			isRequired := attr[k].IsRequired
 			attr[k].IsRequired = false
 			if err := attr[k].ValidTableDefaultAttr(kit.Ctx, v); err.ErrCode != 0 {
 				return err.ToCCError(kit.CCError)
 			}
-			attr[k].IsRequired = isRequired
 		}
 	}
 	return nil
@@ -395,28 +381,52 @@ func (a *attribute) isValid(kit *rest.Kit, isUpdate bool, data *metadata.Attribu
 		return nil
 	}
 
-	if isUpdate {
-		if data.IsMultiple != nil {
-			if err := attrvalid.ValidPropertyTypeIsMultiple(kit, data.PropertyType, *data.IsMultiple); err != nil {
-				return err
-			}
+	if (isUpdate && data.IsMultiple != nil) || !isUpdate {
+		if err := valid.ValidPropertyTypeIsMultiple(data.PropertyType, *data.IsMultiple, kit.CCError); err != nil {
+			return err
+		}
+	}
+
+	// 用户类型字段，在创建的时候默认是支持可多选的，而且这个字段是否可多选在页面是不可配置的,所以在创建的时候将值置为true
+	if data.PropertyType == common.FieldTypeUser && !isUpdate {
+		isMultiple := true
+		data.IsMultiple = &isMultiple
+	}
+
+	// check if property type for creation is valid, can't update property type
+	if !isUpdate && data.PropertyType == "" {
+		return kit.CCError.Errorf(common.CCErrCommParamsNeedSet, metadata.AttributeFieldPropertyType)
+	}
+
+	if !isUpdate || data.PropertyID != "" {
+		if common.AttributeIDMaxLength < utf8.RuneCountInString(data.PropertyID) {
+			return kit.CCError.Errorf(common.CCErrCommValExceedMaxFailed,
+				a.lang.CreateDefaultCCLanguageIf(util.GetLanguage(kit.Header)).Language(
+					"model_attr_bk_property_id"), common.AttributeIDMaxLength)
+		}
+		match, err := regexp.MatchString(common.FieldTypeStrictCharRegexp, data.PropertyID)
+		if err != nil {
+			return err
 		}
 
-		if data.PropertyID != "" {
-			if err := a.validateAttrPropertyID(kit, data.PropertyID); err != nil {
-				return err
-			}
+		if !match {
+			return kit.CCError.Errorf(common.CCErrCommParamsIsInvalid, data.PropertyID)
 		}
+	}
 
-		if data.PropertyName != "" {
-			if common.AttributeNameMaxLength < utf8.RuneCountInString(data.PropertyName) {
-				return kit.CCError.Errorf(common.CCErrCommValExceedMaxFailed,
-					a.lang.CreateDefaultCCLanguageIf(util.GetLanguage(kit.Header)).Language(
-						"model_attr_bk_property_name"), common.AttributeNameMaxLength)
-			}
+	if !isUpdate || data.PropertyName != "" {
+		if common.AttributeNameMaxLength < utf8.RuneCountInString(data.PropertyName) {
+			return kit.CCError.Errorf(common.CCErrCommValExceedMaxFailed,
+				a.lang.CreateDefaultCCLanguageIf(util.GetLanguage(kit.Header)).Language(
+					"model_attr_bk_property_name"), common.AttributeNameMaxLength)
 		}
-	} else {
-		if err := a.isCreateDataValid(kit, data); err != nil {
+	}
+
+	// check option validity for creation,
+	// update validation is in coreservice cause property type need to be obtained from db
+	if !isUpdate && a.isPropertyTypeIntEnumListSingleLong(data.PropertyType) {
+		if err := valid.ValidPropertyOption(data.PropertyType, data.Option, *data.IsMultiple, data.Default, kit.Rid,
+			kit.CCError); err != nil {
 			return err
 		}
 	}
@@ -435,59 +445,6 @@ func (a *attribute) isValid(kit *rest.Kit, isUpdate bool, data *metadata.Attribu
 			common.AttributePlaceHolderMaxLength)
 	}
 
-	return nil
-}
-
-func (a *attribute) isCreateDataValid(kit *rest.Kit, data *metadata.Attribute) error {
-	if err := attrvalid.ValidPropertyTypeIsMultiple(kit, data.PropertyType, *data.IsMultiple); err != nil {
-		return err
-	}
-
-	// check if property type for creation is valid, can't update property type
-	if data.PropertyType == "" {
-		return kit.CCError.Errorf(common.CCErrCommParamsNeedSet, metadata.AttributeFieldPropertyType)
-	}
-
-	// 用户类型字段，在创建的时候默认是支持可多选的，而且这个字段是否可多选在页面是不可配置的,所以在创建的时候将值置为true
-	if data.PropertyType == common.FieldTypeUser {
-		isMultiple := true
-		data.IsMultiple = &isMultiple
-	}
-
-	if err := a.validateAttrPropertyID(kit, data.PropertyID); err != nil {
-		return err
-	}
-
-	if common.AttributeNameMaxLength < utf8.RuneCountInString(data.PropertyName) {
-		return kit.CCError.Errorf(common.CCErrCommValExceedMaxFailed, a.lang.CreateDefaultCCLanguageIf(
-			util.GetLanguage(kit.Header)).Language("model_attr_bk_property_name"), common.AttributeNameMaxLength)
-	}
-
-	// check option validity for creation,
-	// update validation is in coreservice cause property type need to be obtained from db
-	if a.isPropertyTypeIntEnumListSingleLong(data.PropertyType) {
-		err := attrvalid.ValidPropertyOption(kit, data.PropertyType, data.Option, *data.IsMultiple, data.Default)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (a *attribute) validateAttrPropertyID(kit *rest.Kit, propertyID string) error {
-	if common.AttributeIDMaxLength < utf8.RuneCountInString(propertyID) {
-		return kit.CCError.Errorf(common.CCErrCommValExceedMaxFailed, a.lang.CreateDefaultCCLanguageIf(
-			util.GetLanguage(kit.Header)).Language("model_attr_bk_property_id"), common.AttributeIDMaxLength)
-	}
-
-	match, err := regexp.MatchString(common.FieldTypeStrictCharRegexp, propertyID)
-	if err != nil {
-		return err
-	}
-
-	if !match {
-		return kit.CCError.Errorf(common.CCErrCommParamsIsInvalid, propertyID)
-	}
 	return nil
 }
 
@@ -1088,16 +1045,13 @@ func calcTableOptionDiffDefault(kit *rest.Kit, curAttrsOp, dbAttrsOp *metadata.T
 	}
 
 	// the header here is the new header part
-	created := &metadata.TableAttributesOption{
-		Header:  header,
-		Default: curAttrsOp.Default,
-	}
-	if len(created.Header)+len(updated.Header) > metadata.TableHeaderMaxNum {
+	curAttrsOp.Header = header
+	if len(curAttrsOp.Header)+len(updated.Header) > metadata.TableHeaderMaxNum {
 		return nil, nil, nil, kit.CCError.Errorf(common.CCErrCommXXExceedLimit, "table header",
 			metadata.TableHeaderMaxNum)
 	}
 
-	return created, updated, deletePropertyIDs, nil
+	return curAttrsOp, updated, deletePropertyIDs, nil
 }
 
 // validUpdateHeader 判断更新场景下的header是否合法
@@ -1136,7 +1090,7 @@ func (a *attribute) UpdateTableObjectAttr(kit *rest.Kit, data mapstr.MapStr, att
 		return kit.CCError.CCErrorf(common.CCErrCommParamsNeedSet, common.BKPropertyIDField)
 	}
 
-	if err := a.canAttrsUpdate(kit, data, attrID, false, modelBizID); err != nil {
+	if err := a.canAttrsUpdate(kit, data, attrID, false); err != nil {
 		return err
 	}
 
@@ -1182,12 +1136,12 @@ func (a *attribute) UpdateTableObjectAttr(kit *rest.Kit, data mapstr.MapStr, att
 	}
 
 	// updated this part is to be updated
-	if err = a.ValidTableAttrDefaultValue(kit, updated.Default, headerMap); err != nil {
+	if err := a.ValidTableAttrDefaultValue(kit, updated.Default, headerMap); err != nil {
 		blog.Errorf("valid table attr default failed, err: %v, rid: %s", err, kit.Rid)
 		return err
 	}
 
-	updateDataStruct.Option, updateDataStruct.ObjectID = curAttrsOp, objID
+	updateDataStruct.Option, updateDataStruct.ObjectID = updated, objID
 
 	updateData, err := mapstruct.Struct2Map(updateDataStruct)
 	if err != nil {
@@ -1314,15 +1268,14 @@ func (a *attribute) getTemplateIDByObjectAttrID(kit *rest.Kit, attrID int64, fie
 	return &res.Info[0], nil
 }
 
-func (a *attribute) getModelAttrByID(kit *rest.Kit, attrID int64, bizID int64) (*metadata.Attribute, error) {
+func (a *attribute) getModelAttrByID(kit *rest.Kit, attrID int64) (*metadata.Attribute, error) {
 	queryCond := &metadata.QueryCondition{
 		Condition:      mapstr.MapStr{common.BKFieldID: attrID},
 		DisableCounter: true,
 		Page:           metadata.BasePage{Limit: common.BKNoLimit},
 		Fields:         []string{common.BKTemplateID},
 	}
-	resp, err := a.clientSet.CoreService().Model().ReadModelAttrsWithTableByCondition(kit.Ctx, kit.Header, bizID,
-		queryCond)
+	resp, err := a.clientSet.CoreService().Model().ReadModelAttrByCondition(kit.Ctx, kit.Header, queryCond)
 	if err != nil {
 		blog.Errorf("get object attr failed, cond: %+v, err: %v, rid: %s", queryCond, err, kit.Rid)
 		return nil, err
@@ -1371,7 +1324,7 @@ func (a *attribute) getFieldTemplateAttr(kit *rest.Kit, templateID int64, fields
 // canAttrsUpdate coreservice has a similar logical judgment. If the logic here needs to be adjusted,
 // it needs to be judged whether the logic of coreservice needs to be adjusted synchronously.
 // the function name is: checkAttrTemplateInfo
-func (a *attribute) canAttrsUpdate(kit *rest.Kit, input mapstr.MapStr, attrID int64, isSync bool, bizID int64) error {
+func (a *attribute) canAttrsUpdate(kit *rest.Kit, input mapstr.MapStr, attrID int64, isSync bool) error {
 	// 1. 来自字段组合模版同步操作，都可以进行修改，直接正常返回
 	if isSync {
 		return nil
@@ -1382,21 +1335,13 @@ func (a *attribute) canAttrsUpdate(kit *rest.Kit, input mapstr.MapStr, attrID in
 	for k, v := range input {
 		data[k] = v
 	}
-	if newTmplID, ok := data[common.BKTemplateID]; ok {
-		id, err := util.GetIntByInterface(newTmplID)
-		if err != nil {
-			blog.Errorf("get int by interface failed, val: %v, err: %s, rid: %s", newTmplID, err, kit.Rid)
-			return err
-		}
-
-		if id != 0 {
-			blog.Errorf("modify field %s forbidden, val: %s, rid: %s", common.BKTemplateID, newTmplID, kit.Rid)
-			return kit.CCError.CCErrorf(common.CCErrCommModifyFieldForbidden, common.BKTemplateID)
-		}
+	newTmplID, ok := data[common.BKTemplateID]
+	if ok && newTmplID != 0 {
+		return kit.CCError.CCErrorf(common.CCErrCommModifyFieldForbidden, common.BKTemplateID)
 	}
 
 	// 3. 不是同步操作，更新模型自己的属性，正常返回
-	attr, err := a.getModelAttrByID(kit, attrID, bizID)
+	attr, err := a.getModelAttrByID(kit, attrID)
 	if err != nil {
 		return err
 	}
@@ -1405,10 +1350,6 @@ func (a *attribute) canAttrsUpdate(kit *rest.Kit, input mapstr.MapStr, attrID in
 	}
 
 	// 4. 验证来自模版的属性，是否可以正常更新
-	return a.validTmplAttrCanUpdate(kit, data, attr)
-}
-
-func (a *attribute) validTmplAttrCanUpdate(kit *rest.Kit, data mapstr.MapStr, attr *metadata.Attribute) error {
 	fields := make([]string, 0)
 	if _, ok := data[metadata.AttributeFieldIsRequired].(bool); ok {
 		fields = append(fields, metadata.AttributeFieldIsRequired)
@@ -1494,7 +1435,7 @@ func (a *attribute) UpdateObjectAttribute(kit *rest.Kit, data mapstr.MapStr, att
 		return err
 	}
 
-	if err := a.canAttrsUpdate(kit, data, attID, isSync, modelBizID); err != nil {
+	if err := a.canAttrsUpdate(kit, data, attID, isSync); err != nil {
 		return err
 	}
 
@@ -1758,17 +1699,17 @@ func (a *attribute) upsertObjectAttr(kit *rest.Kit, objID string, attr *metadata
 	}
 
 	// update attribute
-	// 如果属性来源于字段模版，那么无法进行更新，正常返回成功
-	if result.Info[0].TemplateID != 0 {
-		return success, nil
-	}
-
 	updateData := attr.ToMapStr()
 	if attr.PropertyType == common.FieldTypeInnerTable {
 		if err := a.UpdateTableObjectAttr(kit, updateData, result.Info[0].ID, attr.BizID); err != nil {
 			blog.Errorf("failed to update module attr, err: %s, rid: %s", err, kit.Rid)
 			return updateFail, err
 		}
+		return success, nil
+	}
+
+	// 如果属性来源于字段模版，那么无法进行更新，正常返回成功
+	if result.Info[0].TemplateID != 0 {
 		return success, nil
 	}
 

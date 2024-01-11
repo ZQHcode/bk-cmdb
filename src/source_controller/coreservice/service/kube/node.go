@@ -18,6 +18,8 @@
 package kube
 
 import (
+	"strconv"
+
 	"configcenter/src/common"
 	"configcenter/src/common/blog"
 	"configcenter/src/common/http/rest"
@@ -28,10 +30,16 @@ import (
 	"configcenter/src/storage/driver/mongodb"
 )
 
-// updateNodeHasPodField here you need to update the has_pod in the node uniformly
-func (s *service) updateNodeHasPodField(kit *rest.Kit, nodeIDs []int64) error {
-	if len(nodeIDs) == 0 {
+// updateNodeField here you need to update the has_pod in the node uniformly
+func (s *service) updateNodeField(kit *rest.Kit, nodeIDMap map[int64]struct{}) error {
+
+	if len(nodeIDMap) == 0 {
 		return nil
+	}
+
+	nodeIDs := make([]int64, 0)
+	for id := range nodeIDMap {
+		nodeIDs = append(nodeIDs, id)
 	}
 
 	filter := map[string]interface{}{
@@ -52,26 +60,21 @@ func (s *service) updateNodeHasPodField(kit *rest.Kit, nodeIDs []int64) error {
 
 // BatchCreateNode batch create nodes
 func (s *service) BatchCreateNode(ctx *rest.Contexts) {
-	inputData := make([]types.OneNodeCreateOption, 0)
-	if err := ctx.DecodeInto(&inputData); err != nil {
+
+	inputData := new(types.CreateNodesOption)
+	if err := ctx.DecodeInto(inputData); err != nil {
 		ctx.RespAutoError(err)
 		return
 	}
-
-	for _, data := range inputData {
-		if err := data.ValidateCreate(); err.ErrCode != 0 {
-			blog.Errorf("node %+v is invalid, err: %v, rid: %s", data, err, ctx.Kit.Rid)
-			ctx.RespAutoError(err.ToCCError(ctx.Kit.CCError))
-			return
-		}
-	}
-
-	nodes, err := s.core.KubeOperation().BatchCreateNode(ctx.Kit, inputData)
+	bizID, err := strconv.ParseInt(ctx.Request.PathParameter("bk_biz_id"), 10, 64)
 	if err != nil {
-		ctx.RespAutoError(err)
+		blog.Error("url parameter bk_biz_id not integer, bizID: %s, rid: %s", ctx.Request.PathParameter("bk_biz_id"),
+			ctx.Kit.Rid)
+		ctx.RespAutoError(ctx.Kit.CCError.Errorf(common.CCErrCommParamsNeedInt, common.BKAppIDField))
 		return
 	}
-	ctx.RespEntity(nodes)
+	nodes, err := s.core.KubeOperation().BatchCreateNode(ctx.Kit, bizID, inputData.Nodes)
+	ctx.RespEntityWithError(nodes, err)
 }
 
 // SearchNodes search nodes
@@ -102,21 +105,26 @@ func (s *service) SearchNodes(ctx *rest.Contexts) {
 
 // BatchUpdateNode batch update node.
 func (s *service) BatchUpdateNode(ctx *rest.Contexts) {
-	input := new(types.UpdateNodeByIDsOption)
+
+	input := new(types.UpdateNodeOption)
 	if err := ctx.DecodeInto(input); nil != err {
 		ctx.RespAutoError(err)
 		return
 	}
 
-	if err := input.Validate(); err.ErrCode != 0 {
-		ctx.RespAutoError(err.ToCCError(ctx.Kit.CCError))
+	bizID, err := strconv.ParseInt(ctx.Request.PathParameter("bk_biz_id"), 10, 64)
+	if err != nil {
+		blog.Error("url parameter bk_biz_id not integer, bizID: %s, rid: %s", ctx.Request.PathParameter("bk_biz_id"),
+			ctx.Kit.Rid)
+		ctx.RespAutoError(ctx.Kit.CCError.Errorf(common.CCErrCommParamsNeedInt, common.BKAppIDField))
 		return
 	}
 
 	filter := map[string]interface{}{
-		types.BKIDField: map[string]interface{}{
-			common.BKDBIN: input.IDs,
-		},
+		types.BKBizIDField: bizID,
+	}
+	filter[types.BKIDField] = map[string]interface{}{
+		common.BKDBIN: input.IDs,
 	}
 	util.SetModOwner(filter, ctx.Kit.SupplierAccount)
 	opts := orm.NewFieldOptions().AddIgnoredFields(types.IgnoredUpdateNodeFields...)
@@ -140,7 +148,7 @@ func (s *service) BatchUpdateNode(ctx *rest.Contexts) {
 
 // BatchDeleteNode batch delete nodes.
 func (s *service) BatchDeleteNode(ctx *rest.Contexts) {
-	option := new(types.BatchDeleteNodeByIDsOption)
+	option := new(types.BatchDeleteNodeOption)
 	if err := ctx.DecodeInto(option); nil != err {
 		ctx.RespAutoError(err)
 		return
@@ -150,10 +158,18 @@ func (s *service) BatchDeleteNode(ctx *rest.Contexts) {
 		ctx.RespAutoError(err.ToCCError(ctx.Kit.CCError))
 		return
 	}
+	bizStr := ctx.Request.PathParameter("bk_biz_id")
+	bizID, err := strconv.ParseInt(bizStr, 10, 64)
+	if err != nil {
+		blog.Error("url parameter bk_biz_id not integer, bizID: %s, rid: %s", bizStr, ctx.Kit.Rid)
+		ctx.RespAutoError(ctx.Kit.CCError.Errorf(common.CCErrCommParamsNeedInt, common.BKAppIDField))
+		return
+	}
 
 	// obtain the hostID of the deleted node and the corresponding business ID.
 	query := map[string]interface{}{
-		types.BKIDField: map[string]interface{}{common.BKDBIN: option.IDs},
+		types.BKIDField:     map[string]interface{}{common.BKDBIN: option.IDs},
+		common.BKAppIDField: bizID,
 	}
 	util.SetQueryOwner(query, ctx.Kit.SupplierAccount)
 	nodes := make([]types.Node, 0)
@@ -170,6 +186,7 @@ func (s *service) BatchDeleteNode(ctx *rest.Contexts) {
 
 	// delete nodes.
 	filter := map[string]interface{}{
+		common.BKAppIDField: bizID,
 		types.BKIDField: map[string]interface{}{
 			common.BKDBIN: option.IDs,
 		},

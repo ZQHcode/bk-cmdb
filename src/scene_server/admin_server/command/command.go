@@ -34,8 +34,16 @@ const (
 // Parse run app command
 func Parse(args []string) error {
 	ctx := context.Background()
-	var exportFlag, importFlag, miniFlag, dryRunFlag bool
-	var filePath, configPosition, bizName, scope string
+	var (
+		exportFlag     bool
+		importFlag     bool
+		miniFlag       bool
+		dryRunFlag     bool
+		filePath       string
+		configPosition string
+		bizName        string
+		scope          string
+	)
 
 	if len(args) <= 1 || args[1] != bkbizCmdName {
 		return nil
@@ -43,8 +51,7 @@ func Parse(args []string) error {
 
 	// set flags
 	cmdFlags := pflag.NewFlagSet(bkbizCmdName, pflag.ExitOnError)
-	cmdFlags.BoolVar(&dryRunFlag, "dryrun", false,
-		"dryrun flag, if this flag seted, we will just print what we will do but not execute to db")
+	cmdFlags.BoolVar(&dryRunFlag, "dryrun", false, "dryrun flag, if this flag seted, we will just print what we will do but not execute to db")
 	cmdFlags.BoolVar(&exportFlag, "export", false, "export flag")
 	cmdFlags.BoolVar(&miniFlag, "mini", false, "mini flag, only export required fields")
 	cmdFlags.BoolVar(&importFlag, "import", false, "import flag")
@@ -82,9 +89,12 @@ func Parse(args []string) error {
 	}
 
 	if exportFlag {
-		mode := "verbose"
+		var mode string
 		if miniFlag {
 			mode = "mini"
+		} else {
+			mode = "verbose"
+
 		}
 		fmt.Printf("exporting %s business to %s in \033[34m%s\033[0m mode\n", bizName, filePath, mode)
 		if err := export(ctx, db, opt); err != nil {

@@ -1074,22 +1074,10 @@ func (ps *ProcServer) DeleteServiceTemplate(ctx *rest.Contexts) {
 	}
 
 	txnErr := ps.Engine.CoreAPI.CoreService().Txn().AutoRunTxn(ctx.Kit.Ctx, ctx.Kit.Header, func() error {
-		err := ps.CoreAPI.CoreService().Process().DeleteServiceTemplate(ctx.Kit.Ctx, ctx.Kit.Header,
-			input.ServiceTemplateID)
+		err := ps.CoreAPI.CoreService().Process().DeleteServiceTemplate(ctx.Kit.Ctx, ctx.Kit.Header, input.ServiceTemplateID)
 		if err != nil {
-			blog.Errorf("delete service template failed, err: %v, bizID: %d, serviceTemplateID: %d, rid: %s",
-				err, input.BizID, input.ServiceTemplateID, ctx.Kit.Rid)
+			blog.Errorf("delete service template: %d failed", input.ServiceTemplateID)
 			return ctx.Kit.CCError.CCError(common.CCErrProcDeleteServiceTemplateFailed)
-		}
-
-		deleteRuleOption := metadata.DeleteHostApplyRuleOption{
-			ServiceTemplateIDs: []int64{input.ServiceTemplateID},
-		}
-		if err := ps.Engine.CoreAPI.CoreService().HostApplyRule().DeleteHostApplyRule(ctx.Kit.Ctx,
-			ctx.Kit.Header, input.BizID, deleteRuleOption); err != nil {
-			blog.Errorf("delete service template host apply rule failed, err: %v, bizID: %d, "+
-				"serviceTemplateID: %d, rid: %s", err, input.BizID, input.ServiceTemplateID, ctx.Kit.Rid)
-			return err
 		}
 		return nil
 	})

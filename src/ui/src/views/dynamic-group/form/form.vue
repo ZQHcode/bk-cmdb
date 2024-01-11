@@ -83,7 +83,6 @@
 
 <script>
   import { mapGetters } from 'vuex'
-  import { t } from '@/i18n'
   import FormPropertyList from './form-property-list.vue'
   import FormPropertySelector from './form-property-selector.js'
   import FormTarget from './form-target.vue'
@@ -154,7 +153,7 @@
       if (this.id) {
         this.getDetails()
       }
-      const { beforeClose, setChanged } = useSideslider()
+      const { beforeClose, setChanged } = useSideslider(this.relationInfo)
       this.beforeClose = beforeClose
       this.setChanged = setChanged
     },
@@ -206,7 +205,7 @@
           id: Date.now(),
           bk_obj_id: 'module',
           bk_property_id: 'service_template_id',
-          bk_property_name: t('服务模板'),
+          bk_property_name: this.$t('服务模板'),
           bk_property_index: -1,
           bk_property_type: 'service-template',
           isonly: true,
@@ -446,8 +445,7 @@
         this.isShow = false
         if (type !== 'normal') {
           RouterQuery.set({
-            _t: Date.now(),
-            action: ''
+            _t: Date.now()
           })
         }
       },
@@ -459,12 +457,14 @@
         const changedProperties =  !isEqual(this.selectedProperties, this.originProperties)
         if (changedValues || changedProperties) {
           this.setChanged(true)
-          return this.beforeClose(() => {
+          this.beforeClose(() => {
             this.close(type)
           })
+        } else {
+          this.close(type)
+          return true
         }
-        this.close(type)
-        return true
+        return false
       },
       handleHidden() {
         this.$emit('close')

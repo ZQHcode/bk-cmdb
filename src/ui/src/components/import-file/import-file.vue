@@ -53,7 +53,6 @@
   import useStep from './step'
   import useFile from './file'
   import { computed } from 'vue'
-  import { $error } from '@/magicbox'
   export default {
     name: 'import-file',
     setup() {
@@ -87,22 +86,13 @@
           this.setFileState('resolving')
           const response = await this.importState.submit({
             file: this.file,
-            step: this.currentStep,
-            config: {
-              globalError: false,
-              transformData: false
-            }
+            step: this.currentStep
           })
-          if (response?.result === false) {
-            throw Error(response.bk_error_msg)
-          }
-          this.setFileResponse(response?.data)
+          this.setFileResponse(response)
           this.nextStep()
           this.setFileState(null)
         } catch (error) {
-          if (error?.message) {
-            $error(error?.message)
-          }
+          console.error(error)
           this.setFileState('error')
           this.setFileError(error)
         }

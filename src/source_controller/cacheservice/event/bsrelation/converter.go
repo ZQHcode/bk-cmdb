@@ -350,12 +350,14 @@ func (b *bizSetRelation) parseBizEvents(es []*types.Event, deletedDetailMap map[
 				}
 			}
 
-			for _, field := range one.ChangeDesc.RemovedFields {
-				if _, exists := params.needCareFieldsMap[field]; exists {
-					if _, exists := params.updatedFieldsIndexMap[field]; !exists {
-						params.updatedFieldsIndexMap[field] = index
+			if len(one.ChangeDesc.RemovedFields) > 0 {
+				for _, field := range one.ChangeDesc.RemovedFields {
+					if _, exists := params.needCareFieldsMap[field]; exists {
+						if _, exists := params.updatedFieldsIndexMap[field]; !exists {
+							params.updatedFieldsIndexMap[field] = index
+						}
+						isIgnored = false
 					}
-					isIgnored = false
 				}
 			}
 

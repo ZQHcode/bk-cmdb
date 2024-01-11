@@ -189,16 +189,6 @@ func runStartFromWatch(c *watchConf) error {
 		return err
 	}
 
-	if err = loopWatchEvent(c, resp, filter, url, client); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func loopWatchEvent(c *watchConf, resp *http.Response, filter map[string]string, url string,
-	client *http.Client) error {
-
 	type response struct {
 		metadata.BaseResp `json:",inline"`
 		Data              WatchResp `json:"data"`
@@ -209,9 +199,8 @@ func loopWatchEvent(c *watchConf, resp *http.Response, filter map[string]string,
 		return err
 	}
 
-	var opt watch.WatchEventOptions
-
 	for {
+
 		if !event.Result {
 			return fmt.Errorf("request failed, err: %s", event.ErrMsg)
 		}
@@ -261,6 +250,7 @@ func loopWatchEvent(c *watchConf, resp *http.Response, filter map[string]string,
 				Resource: watch.CursorType(c.resource),
 				Filter:   watch.WatchEventFilter{SubResource: c.subresource},
 			}
+
 		}
 
 		optByte, _ := json.Marshal(opt)
@@ -282,6 +272,8 @@ func loopWatchEvent(c *watchConf, resp *http.Response, filter map[string]string,
 			return err
 		}
 	}
+
+	return nil
 }
 
 // WatchResp TODO

@@ -28,8 +28,8 @@
     <div class="tab-layout">
       <bk-tab class="topology-tab" type="unborder-card" v-test-id
         :active.sync="activeTab"
-        :before-toggle="handleTabToggle"
-        @tab-change="handleTabChange">
+        :validate-active="false"
+        :before-toggle="handleTabToggle">
         <bk-tab-panel name="hostList" :label="$t('主机列表')">
           <bk-exception class="empty-set" type="empty" scene="part" v-if="emptySet">
             <i18n path="该集群尚未创建模块">
@@ -126,8 +126,17 @@
       }
     },
     watch: {
-      isContainerNode() {
-        this.activeTab = RouterQuery.get('tab', 'hostList')
+      activeTab(tab) {
+        this.$nextTick(() => {
+          // 仅保留公用的参数重置路由
+          RouterQuery.setAll({
+            tab,
+            node: RouterQuery.get('node'),
+            topo_path: this.isContainerNode ? RouterQuery.get('topo_path') : undefined,
+            _f: RouterQuery.get('_f'),
+            _t: Date.now()
+          })
+        })
       },
       emptySet(value) {
         if (!value) {
@@ -160,17 +169,8 @@
         Bus.$emit('toggle-host-filter', false)
         return true
       },
-      handleTabChange(name) {
-        RouterQuery.setAll({
-          tab: name,
-          node: RouterQuery.get('node'),
-          topo_path: this.isContainerNode ? RouterQuery.get('topo_path') : undefined,
-          _f: RouterQuery.get('_f'),
-          _t: Date.now()
-        })
-      },
       handleCreateModule() {
-        this.$refs.topologyTree.handleShowCreateDialog(this.selectedNode)
+        this.$refs.topologyTree.showCreateDialog(this.selectedNode)
       },
       getTopologyModels() {
         return this.$store.dispatch('objectMainLineModule/searchMainlineObject', {

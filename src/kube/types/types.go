@@ -233,9 +233,6 @@ const (
 
 	// BKTableNameBaseContainer the table name of the Container
 	BKTableNameBaseContainer = "cc_ContainerBase"
-
-	// BKTableNameNsSharedClusterRel the table name of shared cluster and biz relation by namespace dimension
-	BKTableNameNsSharedClusterRel = "cc_NsSharedClusterRelation"
 )
 
 // common field names
@@ -268,9 +265,6 @@ const (
 
 	// BKBizIDField business id field
 	BKBizIDField = "bk_biz_id"
-
-	// BKAsstBizIDField asst business id field
-	BKAsstBizIDField = "bk_asst_biz_id"
 
 	// BKSupplierAccountField supplier account
 	BKSupplierAccountField = "bk_supplier_account"
@@ -447,9 +441,8 @@ const (
 const (
 	// KubeFolderID 每个cluster只有唯一的 folder，此节点没有表，统一用 999 表示 folder的ID，如果需要确认具体的 folder
 	// 需要与clusterID结合起来使用
-	KubeFolderID     = 999
-	KubeFolderName   = "空Pod节点"
-	KubeFolderNameEn = "Empty Pod Node(s)"
+	KubeFolderID   = 999
+	KubeFolderName = "空Pod节点"
 )
 
 // container field names

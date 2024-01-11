@@ -14,7 +14,7 @@
   <div :class="['collapse-layout', size]">
     <div class="collapse-trigger" @click="toggle">
       <span :class="['collapse-arrow', 'bk-icon', arrowIconClass, { 'is-collapsed': hidden }]"></span>
-      <span class="collapse-text" v-bk-overflow-tips>
+      <span class="collapse-text">
         <slot name="title">{{label}}</slot>
       </span>
     </div>
@@ -131,7 +131,6 @@
             .collapse-text {
                 flex: 1;
                 font-size: 14px;
-                @include ellipsis;
             }
         }
 

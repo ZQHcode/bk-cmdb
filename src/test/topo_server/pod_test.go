@@ -54,7 +54,7 @@ var _ = Describe("pod test", func() {
 	containerName := "containerName"
 	containerUID := "containerUID"
 	It("prepare environment, create business, cluster, namespace", func() {
-		test.DeleteAllBizs()
+		test.ClearDatabase()
 
 		// create business
 		biz := map[string]interface{}{
@@ -85,7 +85,7 @@ var _ = Describe("pod test", func() {
 			},
 		}
 		rsp, err := hostServerClient.AddHost(context.Background(), header, input)
-		util.RegisterResponseWithRid(rsp, header)
+		util.RegisterResponse(rsp)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(rsp.Result).To(Equal(true), rsp.ToString())
 		searchOpt := &metadata.HostCommonSearch{
@@ -97,7 +97,7 @@ var _ = Describe("pod test", func() {
 			},
 		}
 		hostRep, err := hostServerClient.SearchHost(context.Background(), header, searchOpt)
-		util.RegisterResponseWithRid(rsp, header)
+		util.RegisterResponse(rsp)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(hostRep.Result).To(Equal(true))
 		Expect(hostRep.Data.Count).To(Equal(2))
@@ -113,9 +113,8 @@ var _ = Describe("pod test", func() {
 		region := "shenzhen"
 		vpc := "vpc-q6awe02n"
 		network := []string{"1.1.1.0/21"}
-		clusterType := types.IndependentClusterType
-		createCluster := &types.Cluster{
-			BizID:            bizID,
+		clusterType := "public"
+		createCLuster := &types.Cluster{
 			Name:             &clusterName,
 			SchedulingEngine: &schedulingEngine,
 			Uid:              &clusterUID,
@@ -128,9 +127,9 @@ var _ = Describe("pod test", func() {
 			Type:             &clusterType,
 		}
 
-		id, err := kubeClient.CreateCluster(ctx, header, createCluster)
+		id, err := kubeClient.CreateCluster(ctx, header, bizID, createCLuster)
 
-		util.RegisterResponseWithRid(id, header)
+		util.RegisterResponse(id)
 		Expect(err).NotTo(HaveOccurred())
 		clusterID = id
 
@@ -142,11 +141,10 @@ var _ = Describe("pod test", func() {
 			Name: nsName,
 		}
 		createNsOpt := types.NsCreateOption{
-			BizID: bizID,
-			Data:  []types.Namespace{ns},
+			Data: []types.Namespace{ns},
 		}
 
-		nsResult, err := kubeClient.CreateNamespace(ctx, header, &createNsOpt)
+		nsResult, err := kubeClient.CreateNamespace(ctx, header, bizID, &createNsOpt)
 		util.RegisterResponseWithRid(nsResult, header)
 		Expect(err).NotTo(HaveOccurred())
 		namespaceID = nsResult.IDs[0]
@@ -164,12 +162,11 @@ var _ = Describe("pod test", func() {
 			},
 		}
 		createWOpt := types.WlCreateOption{
-			BizID: bizID,
 			Data: []types.WorkloadInterface{
 				&wl,
 			},
 		}
-		wlResult, err := kubeClient.CreateWorkload(ctx, header, types.KubeDeployment, &createWOpt)
+		wlResult, err := kubeClient.CreateWorkload(ctx, header, bizID, types.KubeDeployment, &createWOpt)
 		util.RegisterResponseWithRid(wlResult, header)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(len(wlResult.IDs)).To(Equal(1))
@@ -186,7 +183,6 @@ var _ = Describe("pod test", func() {
 		internalIP2 := []string{"127.0.0.2"}
 		externalIP2 := []string{"127.0.0.2"}
 		createNode := &types.CreateNodesOption{
-			BizID: bizID,
 			Nodes: []types.OneNodeCreateOption{
 				{
 					HostID:    hostID1,
@@ -211,7 +207,7 @@ var _ = Describe("pod test", func() {
 				},
 			},
 		}
-		nodeResult, err := kubeClient.BatchCreateNode(ctx, header, createNode)
+		nodeResult, err := kubeClient.BatchCreateNode(ctx, header, bizID, createNode)
 		util.RegisterResponse(nodeResult)
 		Expect(err).NotTo(HaveOccurred())
 		nodeID = nodeResult[0]
@@ -307,12 +303,11 @@ var _ = Describe("pod test", func() {
 		}
 		fields := []string{common.BKFieldID}
 		queryOpt := types.PodQueryOption{
-			BizID:  bizID,
 			Filter: filter,
 			Page:   page,
 			Fields: fields,
 		}
-		result, err := kubeClient.ListPod(ctx, header, &queryOpt)
+		result, err := kubeClient.ListPod(ctx, header, bizID, &queryOpt)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(len(result.Info)).To(Equal(1))
 		Expect(result.Info[0][common.BKFieldID].(json.Number).Int64()).To(Equal(podID))
@@ -322,11 +317,10 @@ var _ = Describe("pod test", func() {
 			EnableCount: true,
 		}
 		queryOpt = types.PodQueryOption{
-			BizID:  bizID,
 			Filter: filter,
 			Page:   page,
 		}
-		result, err = kubeClient.ListPod(ctx, header, &queryOpt)
+		result, err = kubeClient.ListPod(ctx, header, bizID, &queryOpt)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(result.Count).To(Equal(1))
 	})
@@ -357,13 +351,11 @@ var _ = Describe("pod test", func() {
 		}
 		fields := []string{types.ContainerUIDField}
 		queryOpt := types.ContainerQueryOption{
-			BizID:  bizID,
-			PodID:  podID,
 			Filter: filter,
 			Page:   page,
 			Fields: fields,
 		}
-		result, err := kubeClient.ListContainer(ctx, header, &queryOpt)
+		result, err := kubeClient.ListContainer(ctx, header, bizID, &queryOpt)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(len(result.Info)).To(Equal(1))
 		Expect(result.Info[0][types.ContainerUIDField].(string)).To(Equal(containerUID))
@@ -373,12 +365,10 @@ var _ = Describe("pod test", func() {
 			EnableCount: true,
 		}
 		queryOpt = types.ContainerQueryOption{
-			BizID:  bizID,
-			PodID:  podID,
 			Filter: filter,
 			Page:   page,
 		}
-		result, err = kubeClient.ListContainer(ctx, header, &queryOpt)
+		result, err = kubeClient.ListContainer(ctx, header, bizID, &queryOpt)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(result.Count).To(Equal(1))
 	})
@@ -403,11 +393,10 @@ var _ = Describe("pod test", func() {
 	It("find pod path", func() {
 
 		req := types.PodPathOption{
-			BizID:  bizID,
 			PodIDs: []int64{podID},
 		}
 
-		result, err := kubeClient.FindPodPath(ctx, header, &req)
+		result, err := kubeClient.FindPodPath(ctx, header, bizID, &req)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(len(result.Info)).To(Equal(1))
 		Expect(result.Info[0].BizName).To(Equal(bizName))

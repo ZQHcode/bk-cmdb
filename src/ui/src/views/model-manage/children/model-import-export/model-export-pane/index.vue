@@ -76,17 +76,15 @@
           .values(confirmedExportData.value.excludedRelations)
           .reduce((prev, next) => prev.concat(next.map(item => item.id)), [])
 
-        const { expirationTime, password, fileName, isEncrypt } = exportSetting.value
+        const { expirationTime, password, fileName } = exportSetting.value
         const setValue = (key, value) => {
           if (value !== undefined && value !== null && value !== '') {
             params[key] = value
           }
         }
 
-        if (isEncrypt) {
-          setValue('expiration', expirationTime)
-          setValue('password', password)
-        }
+        setValue('expiration', expirationTime)
+        setValue('password', password)
         setValue('file_name', fileName)
 
         isDownloading.value = true

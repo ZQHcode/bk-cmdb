@@ -25,7 +25,7 @@ var _ = Describe("user operation test", func() {
 				"time_zone":         "Africa/Accra",
 			}
 			rsp, err := apiServerClient.CreateBiz(context.Background(), "0", header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			Expect(rsp.Data).To(ContainElement("user_biz"))
@@ -37,7 +37,7 @@ var _ = Describe("user operation test", func() {
 	Describe("user custom test", func() {
 		It("search default user custom", func() {
 			rsp, err := hostServerClient.GetUserCustom(context.Background(), header)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 		})
@@ -47,14 +47,14 @@ var _ = Describe("user operation test", func() {
 				"index_v2_classify_navigation": []string{"bk_middleware"},
 			}
 			rsp, err := hostServerClient.SaveUserCustom(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 		})
 
 		It("search user custom", func() {
 			rsp, err := hostServerClient.GetUserCustom(context.Background(), header)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			data := rsp.Data.(map[string]interface{})
@@ -67,14 +67,13 @@ var _ = Describe("user operation test", func() {
 
 		It("create user favorites", func() {
 			input := &metadata.FavouriteParms{
-				Info: fmt.Sprintf("{\"bk_biz_id\":%v,\"exact_search\":true,\"bk_host_innerip\":true,\"bk_host_outerip\":true,\"ip_list\":[]}",
-					bizId),
+				Info:        fmt.Sprintf("{\"bk_biz_id\":%v,\"exact_search\":true,\"bk_host_innerip\":true,\"bk_host_outerip\":true,\"ip_list\":[]}", bizId),
 				QueryParams: "[]",
 				Name:        "123",
 				Type:        metadata.Tradition,
 			}
 			rsp, err := hostServerClient.AddHostFavourite(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			favId = rsp.Data.(map[string]interface{})["id"].(string)
@@ -82,27 +81,25 @@ var _ = Describe("user operation test", func() {
 
 		It("create user favorites less name", func() {
 			input := &metadata.FavouriteParms{
-				Info: fmt.Sprintf("{\"bk_biz_id\":%v,\"exact_search\":true,\"bk_host_innerip\":true,\"bk_host_outerip\":true,\"ip_list\":[]}",
-					bizId),
+				Info:        fmt.Sprintf("{\"bk_biz_id\":%v,\"exact_search\":true,\"bk_host_innerip\":true,\"bk_host_outerip\":true,\"ip_list\":[]}", bizId),
 				QueryParams: "[]",
 				Type:        metadata.Tradition,
 			}
 			rsp, err := hostServerClient.AddHostFavourite(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(false))
 		})
 
 		It("create user favorites same name", func() {
 			input := &metadata.FavouriteParms{
-				Info: fmt.Sprintf("{\"bk_biz_id\":%v,\"exact_search\":true,\"bk_host_innerip\":true,\"bk_host_outerip\":true,\"ip_list\":[]}",
-					bizId),
+				Info:        fmt.Sprintf("{\"bk_biz_id\":%v,\"exact_search\":true,\"bk_host_innerip\":true,\"bk_host_outerip\":true,\"ip_list\":[]}", bizId),
 				QueryParams: "[]",
 				Name:        "123",
 				Type:        metadata.Tradition,
 			}
 			rsp, err := hostServerClient.AddHostFavourite(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(false))
 		})
@@ -115,21 +112,20 @@ var _ = Describe("user operation test", func() {
 				Type:        metadata.Tradition,
 			}
 			rsp, err := hostServerClient.AddHostFavourite(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(false))
 		})
 
 		It("create user favorites invalid query_params", func() {
 			input := &metadata.FavouriteParms{
-				Info: fmt.Sprintf("{\"bk_biz_id\":%v,\"exact_search\":true,\"bk_host_innerip\":true,\"bk_host_outerip\":true,\"ip_list\":[]}",
-					bizId),
+				Info:        fmt.Sprintf("{\"bk_biz_id\":%v,\"exact_search\":true,\"bk_host_innerip\":true,\"bk_host_outerip\":true,\"ip_list\":[]}", bizId),
 				QueryParams: "abc",
 				Name:        "12345",
 				Type:        metadata.Tradition,
 			}
 			rsp, err := hostServerClient.AddHostFavourite(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(false))
 		})
@@ -140,7 +136,7 @@ var _ = Describe("user operation test", func() {
 				Limit: 10,
 			}
 			rsp, err := hostServerClient.GetHostFavourites(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			Expect(rsp.Data.Count).To(Equal(uint64(1)))
@@ -149,61 +145,58 @@ var _ = Describe("user operation test", func() {
 
 		It("increase user favorites", func() {
 			rsp, err := hostServerClient.IncrHostFavouritesCount(context.Background(), favId, header)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 		})
 
 		It("increase user favorites nonexist id", func() {
 			rsp, err := hostServerClient.IncrHostFavouritesCount(context.Background(), "123456", header)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(false))
 		})
 
 		It("update user favorites", func() {
 			input := &metadata.FavouriteParms{
-				ID: favId,
-				Info: fmt.Sprintf("{\"bk_biz_id\":%v,\"exact_search\":true,\"bk_host_innerip\":true,\"bk_host_outerip\":true,\"ip_list\":[]}",
-					bizId),
+				ID:          favId,
+				Info:        fmt.Sprintf("{\"bk_biz_id\":%v,\"exact_search\":true,\"bk_host_innerip\":true,\"bk_host_outerip\":true,\"ip_list\":[]}", bizId),
 				QueryParams: "[]",
 				Name:        "1234",
 				Count:       2,
 				Type:        metadata.Tradition,
 			}
 			rsp, err := hostServerClient.UpdateHostFavouriteByID(context.Background(), favId, header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 		})
 
 		It("update user favorites nonexist id", func() {
 			input := &metadata.FavouriteParms{
-				ID: "1000",
-				Info: fmt.Sprintf("{\"bk_biz_id\":%v,\"exact_search\":true,\"bk_host_innerip\":true,\"bk_host_outerip\":true,\"ip_list\":[]}",
-					bizId),
+				ID:          "1000",
+				Info:        fmt.Sprintf("{\"bk_biz_id\":%v,\"exact_search\":true,\"bk_host_innerip\":true,\"bk_host_outerip\":true,\"ip_list\":[]}", bizId),
 				QueryParams: "[]",
 				Name:        "1234",
 				Count:       2,
 				Type:        metadata.Tradition,
 			}
 			rsp, err := hostServerClient.UpdateHostFavouriteByID(context.Background(), "1000", header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(false))
 		})
 
 		It("update user favorites less name", func() {
 			input := &metadata.FavouriteParms{
-				ID: favId,
-				Info: fmt.Sprintf("{\"bk_biz_id\":%v,\"exact_search\":true,\"bk_host_innerip\":true,\"bk_host_outerip\":true,\"ip_list\":[]}",
-					bizId),
+				ID:          favId,
+				Info:        fmt.Sprintf("{\"bk_biz_id\":%v,\"exact_search\":true,\"bk_host_innerip\":true,\"bk_host_outerip\":true,\"ip_list\":[]}", bizId),
 				QueryParams: "[]",
 				Count:       2,
 				Type:        metadata.Tradition,
 			}
 			rsp, err := hostServerClient.UpdateHostFavouriteByID(context.Background(), favId, header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(false))
 		})
@@ -216,21 +209,20 @@ var _ = Describe("user operation test", func() {
 				Type:        metadata.Tradition,
 			}
 			rsp, err := hostServerClient.UpdateHostFavouriteByID(context.Background(), favId, header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(false))
 		})
 
 		It("update user favorites invalid query_params", func() {
 			input := &metadata.FavouriteParms{
-				Info: fmt.Sprintf("{\"bk_biz_id\":%v,\"exact_search\":true,\"bk_host_innerip\":true,\"bk_host_outerip\":true,\"ip_list\":[]}",
-					bizId),
+				Info:        fmt.Sprintf("{\"bk_biz_id\":%v,\"exact_search\":true,\"bk_host_innerip\":true,\"bk_host_outerip\":true,\"ip_list\":[]}", bizId),
 				QueryParams: "abc",
 				Name:        "12345",
 				Type:        metadata.Tradition,
 			}
 			rsp, err := hostServerClient.UpdateHostFavouriteByID(context.Background(), favId, header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(false))
 		})
@@ -241,7 +233,7 @@ var _ = Describe("user operation test", func() {
 				Limit: 10,
 			}
 			rsp, err := hostServerClient.GetHostFavourites(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			Expect(rsp.Data.Count).To(Equal(uint64(1)))
@@ -250,14 +242,14 @@ var _ = Describe("user operation test", func() {
 
 		It("delete user favorites", func() {
 			rsp, err := hostServerClient.DeleteHostFavouriteByID(context.Background(), favId, header)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 		})
 
 		It("delete user favorites nonexist id", func() {
 			rsp, err := hostServerClient.DeleteHostFavouriteByID(context.Background(), "123456", header)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(false))
 		})
@@ -268,7 +260,7 @@ var _ = Describe("user operation test", func() {
 				Limit: 10,
 			}
 			rsp, err := hostServerClient.GetHostFavourites(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			Expect(rsp.Data.Count).To(Equal(uint64(0)))

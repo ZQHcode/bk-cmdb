@@ -98,13 +98,6 @@ func (w *DaemonSet) ValidateCreate() ccErr.RawErrorInfo {
 		}
 	}
 
-	if w.BizID == 0 {
-		return ccErr.RawErrorInfo{
-			ErrCode: common.CCErrCommParamsNeedSet,
-			Args:    []interface{}{common.BKAppIDField},
-		}
-	}
-
 	if err := ValidateCreate(*w, DaemonSetFields); err.ErrCode != 0 {
 		return err
 	}

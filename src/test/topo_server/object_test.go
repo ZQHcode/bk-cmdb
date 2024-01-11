@@ -19,8 +19,6 @@ import (
 )
 
 var _ = Describe("object test", func() {
-	test.DeleteAllBizs()
-
 	var bizId string
 	var childInstId string
 	var setId string
@@ -31,8 +29,7 @@ var _ = Describe("object test", func() {
 
 	Describe("mainline object test", func() {
 		It("create business bk_biz_name = 'abc'", func() {
-			test.DeleteAllBizs()
-
+			test.ClearDatabase()
 			input := map[string]interface{}{
 				"life_cycle":        "2",
 				"language":          "1",
@@ -45,7 +42,7 @@ var _ = Describe("object test", func() {
 				"time_zone":         "Africa/Accra",
 			}
 			rsp, err := apiServerClient.CreateBiz(context.Background(), "0", header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			Expect(rsp.Data).To(ContainElement("abc"))
@@ -66,7 +63,7 @@ var _ = Describe("object test", func() {
 				AssociationID: "biz",
 			}
 			rsp, err := objectClient.CreateModel(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			data := map[string]interface{}{
@@ -93,7 +90,7 @@ var _ = Describe("object test", func() {
 				AssociationID: "biz",
 			}
 			rsp, err := objectClient.CreateModel(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).Should(BeNil())
 			Expect(rsp.Result).To(Equal(false))
 		})
@@ -110,7 +107,7 @@ var _ = Describe("object test", func() {
 				AssociationID: "xxx",
 			}
 			rsp, err := objectClient.CreateModel(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).Should(BeNil())
 			Expect(rsp.Result).To(Equal(false))
 		})
@@ -127,7 +124,7 @@ var _ = Describe("object test", func() {
 				AssociationID: "",
 			}
 			rsp, err := objectClient.CreateModel(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).Should(BeNil())
 			Expect(rsp.Result).To(Equal(false))
 		})
@@ -143,7 +140,7 @@ var _ = Describe("object test", func() {
 				},
 			}
 			rsp, err := objectClient.CreateModel(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).Should(BeNil())
 			Expect(rsp.Result).To(Equal(false))
 		})
@@ -159,7 +156,7 @@ var _ = Describe("object test", func() {
 				AssociationID: "biz",
 			}
 			rsp, err := objectClient.CreateModel(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).Should(BeNil())
 			Expect(rsp.Result).To(Equal(false))
 		})
@@ -175,7 +172,7 @@ var _ = Describe("object test", func() {
 				AssociationID: "biz",
 			}
 			rsp, err := objectClient.CreateModel(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).Should(BeNil())
 			Expect(rsp.Result).To(Equal(false))
 		})
@@ -191,7 +188,7 @@ var _ = Describe("object test", func() {
 				AssociationID: "biz",
 			}
 			rsp, err := objectClient.CreateModel(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).Should(BeNil())
 			Expect(rsp.Result).To(Equal(false))
 		})
@@ -207,21 +204,21 @@ var _ = Describe("object test", func() {
 				AssociationID: "biz",
 			}
 			rsp, err := objectClient.CreateModel(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).Should(BeNil())
 			Expect(rsp.Result).To(Equal(false))
 		})
 
 		It("delete mainline object bk_obj_id = 'test_object'", func() {
 			rsp, err := objectClient.DeleteModel(context.Background(), "test_object", header)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 		})
 
 		It("delete mainline object twice", func() {
 			rsp, err := objectClient.DeleteModel(context.Background(), "test_object", header)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).Should(BeNil())
 			Expect(rsp.Result).To(Equal(false))
 		})
@@ -238,7 +235,7 @@ var _ = Describe("object test", func() {
 				AssociationID: "biz",
 			}
 			rsp, err := objectClient.CreateModel(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			data := map[string]interface{}{
@@ -255,7 +252,7 @@ var _ = Describe("object test", func() {
 
 		It("search mainline object", func() {
 			rsp, err := objectClient.SelectModel(context.Background(), header)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			data1 := metadata.MainlineObjectTopo{
@@ -294,7 +291,7 @@ var _ = Describe("object test", func() {
 	Describe("instance topo test", func() {
 		It("search instance topo", func() {
 			rsp, err := objectClient.SelectInst(context.Background(), bizIdInt, header)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			j, err := json.Marshal(rsp.Data)
@@ -318,7 +315,7 @@ var _ = Describe("object test", func() {
 
 		It("search instance topo", func() {
 			rsp, err := instClient.GetInternalModule(context.Background(), "0", bizId, header)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			Expect(rsp.Data.SetName).To(Equal("空闲机池"))
@@ -337,7 +334,7 @@ var _ = Describe("object test", func() {
 				OwnerID:            "0",
 			}
 			rsp, err := objectClient.CreateClassification(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			j, err := json.Marshal(rsp.Data)
@@ -358,7 +355,7 @@ var _ = Describe("object test", func() {
 				OwnerID:            "0",
 			}
 			rsp, err := objectClient.CreateClassification(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			j, err := json.Marshal(rsp.Data)
@@ -379,7 +376,7 @@ var _ = Describe("object test", func() {
 				OwnerID:            "0",
 			}
 			rsp, err := objectClient.CreateClassification(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).Should(BeNil())
 			Expect(rsp.Result).To(Equal(false))
 		})
@@ -392,7 +389,7 @@ var _ = Describe("object test", func() {
 				OwnerID:            "0",
 			}
 			rsp, err := objectClient.CreateClassification(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).Should(BeNil())
 			Expect(rsp.Result).To(Equal(false))
 		})
@@ -403,7 +400,7 @@ var _ = Describe("object test", func() {
 				"bk_classification_icon": "icon-cc-default-class",
 			}
 			rsp, err := objectClient.UpdateClassification(context.Background(), clsId, header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 		})
@@ -413,7 +410,7 @@ var _ = Describe("object test", func() {
 				"bk_classification_name": "cc_est_object",
 			}
 			rsp, err := objectClient.UpdateClassification(context.Background(), clsId, header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).Should(BeNil())
 			Expect(rsp.Result).To(Equal(false))
 		})
@@ -421,7 +418,7 @@ var _ = Describe("object test", func() {
 		It("delete classification", func() {
 			input := map[string]interface{}{}
 			rsp, err := objectClient.DeleteClassification(context.Background(), clsId2, header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 		})
@@ -429,7 +426,7 @@ var _ = Describe("object test", func() {
 		It("search classification", func() {
 			input := map[string]interface{}{}
 			rsp, err := objectClient.SelectClassificationWithParams(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			j, err := json.Marshal(rsp.Data)
@@ -457,7 +454,7 @@ var _ = Describe("object test", func() {
 				Creator:    "admin",
 			}
 			rsp, err := objectClient.CreateObject(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			j, err := json.Marshal(rsp.Data)
@@ -476,7 +473,7 @@ var _ = Describe("object test", func() {
 				"bk_classification_id": "cc_class",
 			}
 			rsp, err := objectClient.DeleteClassification(context.Background(), "0", header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).Should(BeNil())
 			Expect(rsp.Result).To(Equal(false))
 		})
@@ -491,7 +488,7 @@ var _ = Describe("object test", func() {
 				Creator:    "admin",
 			}
 			rsp, err := objectClient.CreateObject(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).Should(BeNil())
 			Expect(rsp.Result).To(Equal(false))
 		})
@@ -506,7 +503,7 @@ var _ = Describe("object test", func() {
 				Creator:    "admin",
 			}
 			rsp, err := objectClient.CreateObject(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).Should(BeNil())
 			Expect(rsp.Result).To(Equal(false))
 		})
@@ -521,7 +518,7 @@ var _ = Describe("object test", func() {
 				Creator:    "admin",
 			}
 			rsp, err := objectClient.CreateObject(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).Should(BeNil())
 			Expect(rsp.Result).To(Equal(false))
 		})
@@ -536,7 +533,7 @@ var _ = Describe("object test", func() {
 				Creator:    "admin",
 			}
 			rsp, err := objectClient.CreateObject(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			j, err := json.Marshal(rsp.Data)
@@ -556,7 +553,7 @@ var _ = Describe("object test", func() {
 				"bk_classification_id": "cc_class",
 			}
 			rsp, err := objectClient.SelectClassificationWithObjects(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			j, err := json.Marshal(rsp.Data)
@@ -576,7 +573,7 @@ var _ = Describe("object test", func() {
 				"bk_obj_name": "test_obj1",
 			}
 			rsp, err := objectClient.UpdateObject(context.Background(), objId, header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 		})
@@ -586,7 +583,7 @@ var _ = Describe("object test", func() {
 				"bk_obj_name": "cc模型",
 			}
 			rsp, err := objectClient.UpdateObject(context.Background(), objId, header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).Should(BeNil())
 			Expect(rsp.Result).To(Equal(false))
 		})
@@ -597,7 +594,7 @@ var _ = Describe("object test", func() {
 				"bk_supplier_account": "0",
 			}
 			rsp, err := objectClient.SelectObjectWithParams(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			j, err := json.Marshal(rsp.Data)
@@ -608,9 +605,11 @@ var _ = Describe("object test", func() {
 		})
 
 		It("delete object", func() {
-			err := objectClient.DeleteObject(context.Background(), objId, header)
-			util.RegisterResponseWithRid(err, header)
+			input := map[string]interface{}{}
+			rsp, err := objectClient.DeleteObject(context.Background(), objId, header, input)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
+			Expect(rsp.Result).To(Equal(true))
 		})
 
 		It("search object topo", func() {
@@ -618,14 +617,14 @@ var _ = Describe("object test", func() {
 				"bk_classification_id": "cc_class",
 			}
 			rsp, err := objectClient.SelectObjectTopo(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 		})
 
 		It("search object topo graphics", func() {
 			rsp, err := objectClient.SelectObjectTopoGraphics(context.Background(), "global", "0", header)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			j, err := json.Marshal(rsp.Data)
@@ -648,14 +647,14 @@ var _ = Describe("object test", func() {
 				},
 			}
 			rsp, err := objectClient.UpdateObjectTopoGraphics(context.Background(), "global", "0", header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 		})
 
 		It("search object topo graphics", func() {
 			rsp, err := objectClient.SelectObjectTopoGraphics(context.Background(), "global", "0", header)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			j, err := json.Marshal(rsp.Data)
@@ -678,7 +677,7 @@ var _ = Describe("object test", func() {
 					OwnerID:    "0",
 				}
 				rsp, err := objectClient.CreatePropertyGroup(context.Background(), header, input)
-				util.RegisterResponseWithRid(rsp, header)
+				util.RegisterResponse(rsp)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(rsp.Result).To(Equal(true))
 				j, err := json.Marshal(rsp.Data)
@@ -701,7 +700,7 @@ var _ = Describe("object test", func() {
 					OwnerID:    "0",
 				}
 				rsp, err := objectClient.CreatePropertyGroup(context.Background(), header, input)
-				util.RegisterResponseWithRid(rsp, header)
+				util.RegisterResponse(rsp)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(rsp.Result).To(Equal(true))
 				j, err := json.Marshal(rsp.Data)
@@ -724,7 +723,7 @@ var _ = Describe("object test", func() {
 					OwnerID:    "0",
 				}
 				rsp, err := objectClient.CreatePropertyGroup(context.Background(), header, input)
-				util.RegisterResponseWithRid(rsp, header)
+				util.RegisterResponse(rsp)
 				Expect(err).Should(BeNil())
 				Expect(rsp.Result).To(Equal(false))
 			})
@@ -738,7 +737,7 @@ var _ = Describe("object test", func() {
 					OwnerID:    "0",
 				}
 				rsp, err := objectClient.CreatePropertyGroup(context.Background(), header, input)
-				util.RegisterResponseWithRid(rsp, header)
+				util.RegisterResponse(rsp)
 				Expect(err).Should(BeNil())
 				Expect(rsp.Result).To(Equal(false))
 			})
@@ -752,7 +751,7 @@ var _ = Describe("object test", func() {
 					OwnerID:    "0",
 				}
 				rsp, err := objectClient.CreatePropertyGroup(context.Background(), header, input)
-				util.RegisterResponseWithRid(rsp, header)
+				util.RegisterResponse(rsp)
 				Expect(err).Should(BeNil())
 				Expect(rsp.Result).To(Equal(false))
 			})
@@ -767,7 +766,7 @@ var _ = Describe("object test", func() {
 					},
 				}
 				rsp, err := objectClient.UpdatePropertyGroup(context.Background(), header, input)
-				util.RegisterResponseWithRid(rsp, header)
+				util.RegisterResponse(rsp)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(rsp.Result).To(Equal(true))
 				group.GroupName = "456"
@@ -783,15 +782,14 @@ var _ = Describe("object test", func() {
 					},
 				}
 				rsp, err := objectClient.UpdatePropertyGroup(context.Background(), header, input)
-				util.RegisterResponseWithRid(rsp, header)
+				util.RegisterResponse(rsp)
 				Expect(err).Should(BeNil())
 				Expect(rsp.Result).To(Equal(false))
 			})
 
 			It("delete group", func() {
-				rsp, err := objectClient.DeletePropertyGroup(context.Background(), strconv.FormatInt(groupId, 10),
-					header)
-				util.RegisterResponseWithRid(rsp, header)
+				rsp, err := objectClient.DeletePropertyGroup(context.Background(), strconv.FormatInt(groupId, 10), header)
+				util.RegisterResponse(rsp)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(rsp.Result).To(Equal(true))
 				groupId = group.ID
@@ -800,7 +798,7 @@ var _ = Describe("object test", func() {
 			It("search group bk_obj_id='cc_obj'", func() {
 				input := map[string]interface{}{}
 				rsp, err := objectClient.SelectPropertyGroupByObjectID(context.Background(), "cc_obj", header, input)
-				util.RegisterResponseWithRid(rsp, header)
+				util.RegisterResponse(rsp)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(rsp.Result).To(Equal(true))
 				j, err := json.Marshal(rsp.Data)
@@ -825,35 +823,34 @@ var _ = Describe("object test", func() {
 		Describe("object attribute test", func() {
 			var attrId, attrId1 string
 
-			It("create object attribute bk_obj_id='cc_obj' and bk_property_id='test_sglchar' and bk_property_name='test_sglchar'",
-				func() {
-					input := &metadata.ObjAttDes{
-						Attribute: metadata.Attribute{
-							OwnerID:       "0",
-							ObjectID:      "cc_obj",
-							PropertyID:    "test_sglchar",
-							PropertyName:  "test_sglchar",
-							PropertyGroup: "default",
-							IsEditable:    true,
-							PropertyType:  "singlechar",
-						},
-					}
-					rsp, err := apiServerClient.CreateObjectAtt(context.Background(), header, input)
-					util.RegisterResponseWithRid(rsp, header)
-					Expect(err).NotTo(HaveOccurred())
-					Expect(rsp.Result).To(Equal(true))
-					j, err := json.Marshal(rsp.Data)
-					data := metadata.Attribute{}
-					json.Unmarshal(j, &data)
-					Expect(data.ObjectID).To(Equal(input.ObjectID))
-					Expect(data.PropertyID).To(Equal(input.PropertyID))
-					Expect(data.PropertyName).To(Equal(input.PropertyName))
-					Expect(data.PropertyGroup).To(Equal(input.PropertyGroup))
-					Expect(data.IsEditable).To(Equal(input.IsEditable))
-					Expect(data.PropertyType).To(Equal(input.PropertyType))
-					Expect(data.OwnerID).To(Equal(input.OwnerID))
-					attrId = strconv.FormatInt(data.ID, 10)
-				})
+			It("create object attribute bk_obj_id='cc_obj' and bk_property_id='test_sglchar' and bk_property_name='test_sglchar'", func() {
+				input := &metadata.ObjAttDes{
+					Attribute: metadata.Attribute{
+						OwnerID:       "0",
+						ObjectID:      "cc_obj",
+						PropertyID:    "test_sglchar",
+						PropertyName:  "test_sglchar",
+						PropertyGroup: "default",
+						IsEditable:    true,
+						PropertyType:  "singlechar",
+					},
+				}
+				rsp, err := apiServerClient.CreateObjectAtt(context.Background(), header, input)
+				util.RegisterResponse(rsp)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(rsp.Result).To(Equal(true))
+				j, err := json.Marshal(rsp.Data)
+				data := metadata.Attribute{}
+				json.Unmarshal(j, &data)
+				Expect(data.ObjectID).To(Equal(input.ObjectID))
+				Expect(data.PropertyID).To(Equal(input.PropertyID))
+				Expect(data.PropertyName).To(Equal(input.PropertyName))
+				Expect(data.PropertyGroup).To(Equal(input.PropertyGroup))
+				Expect(data.IsEditable).To(Equal(input.IsEditable))
+				Expect(data.PropertyType).To(Equal(input.PropertyType))
+				Expect(data.OwnerID).To(Equal(input.OwnerID))
+				attrId = strconv.FormatInt(data.ID, 10)
+			})
 
 			It("create object attribute with same bk_property_id", func() {
 				input := &metadata.ObjAttDes{
@@ -868,7 +865,7 @@ var _ = Describe("object test", func() {
 					},
 				}
 				rsp, err := apiServerClient.CreateObjectAtt(context.Background(), header, input)
-				util.RegisterResponseWithRid(rsp, header)
+				util.RegisterResponse(rsp)
 				Expect(err).Should(BeNil())
 				Expect(rsp.Result).To(Equal(false))
 			})
@@ -886,7 +883,7 @@ var _ = Describe("object test", func() {
 					},
 				}
 				rsp, err := apiServerClient.CreateObjectAtt(context.Background(), header, input)
-				util.RegisterResponseWithRid(rsp, header)
+				util.RegisterResponse(rsp)
 				Expect(err).Should(BeNil())
 				Expect(rsp.Result).To(Equal(false))
 			})
@@ -904,7 +901,7 @@ var _ = Describe("object test", func() {
 					},
 				}
 				rsp, err := apiServerClient.CreateObjectAtt(context.Background(), header, input)
-				util.RegisterResponseWithRid(rsp, header)
+				util.RegisterResponse(rsp)
 				Expect(err).Should(BeNil())
 				Expect(rsp.Result).To(Equal(false))
 			})
@@ -926,7 +923,7 @@ var _ = Describe("object test", func() {
 					},
 				}
 				rsp, err := apiServerClient.CreateObjectAtt(context.Background(), header, input)
-				util.RegisterResponseWithRid(rsp, header)
+				util.RegisterResponse(rsp)
 				Expect(err).Should(BeNil())
 				Expect(rsp.Result).To(Equal(false))
 			})
@@ -944,77 +941,75 @@ var _ = Describe("object test", func() {
 					},
 				}
 				rsp, err := apiServerClient.CreateObjectAtt(context.Background(), header, input)
-				util.RegisterResponseWithRid(rsp, header)
+				util.RegisterResponse(rsp)
 				Expect(err).Should(BeNil())
 				Expect(rsp.Result).To(Equal(false))
 			})
 
-			It("create object attribute bk_obj_id='cc_obj' and bk_property_id='test_singlechar' and bk_property_name='test_singlechar' and invalid PropertyGroup",
-				func() {
-					input := &metadata.ObjAttDes{
-						Attribute: metadata.Attribute{
-							OwnerID:       "0",
-							ObjectID:      "cc_obj",
-							PropertyID:    "test_singlechar",
-							PropertyName:  "test_singlechar",
-							PropertyGroup: "abcdefg",
-							IsEditable:    true,
-							PropertyType:  "singlechar",
-						},
-					}
-					rsp, err := apiServerClient.CreateObjectAtt(context.Background(), header, input)
-					util.RegisterResponseWithRid(rsp, header)
-					Expect(err).NotTo(HaveOccurred())
-					Expect(rsp.Result).To(Equal(true))
-					j, err := json.Marshal(rsp.Data)
-					data := metadata.Attribute{}
-					json.Unmarshal(j, &data)
-					Expect(data.ObjectID).To(Equal(input.ObjectID))
-					Expect(data.PropertyID).To(Equal(input.PropertyID))
-					Expect(data.PropertyName).To(Equal(input.PropertyName))
-					Expect(data.PropertyGroup).To(Equal("default"))
-					Expect(data.IsEditable).To(Equal(input.IsEditable))
-					Expect(data.PropertyType).To(Equal(input.PropertyType))
-					Expect(data.OwnerID).To(Equal(input.OwnerID))
-					attrId1 = strconv.FormatInt(data.ID, 10)
-				})
+			It("create object attribute bk_obj_id='cc_obj' and bk_property_id='test_singlechar' and bk_property_name='test_singlechar' and invalid PropertyGroup", func() {
+				input := &metadata.ObjAttDes{
+					Attribute: metadata.Attribute{
+						OwnerID:       "0",
+						ObjectID:      "cc_obj",
+						PropertyID:    "test_singlechar",
+						PropertyName:  "test_singlechar",
+						PropertyGroup: "abcdefg",
+						IsEditable:    true,
+						PropertyType:  "singlechar",
+					},
+				}
+				rsp, err := apiServerClient.CreateObjectAtt(context.Background(), header, input)
+				util.RegisterResponse(rsp)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(rsp.Result).To(Equal(true))
+				j, err := json.Marshal(rsp.Data)
+				data := metadata.Attribute{}
+				json.Unmarshal(j, &data)
+				Expect(data.ObjectID).To(Equal(input.ObjectID))
+				Expect(data.PropertyID).To(Equal(input.PropertyID))
+				Expect(data.PropertyName).To(Equal(input.PropertyName))
+				Expect(data.PropertyGroup).To(Equal("default"))
+				Expect(data.IsEditable).To(Equal(input.IsEditable))
+				Expect(data.PropertyType).To(Equal(input.PropertyType))
+				Expect(data.OwnerID).To(Equal(input.OwnerID))
+				attrId1 = strconv.FormatInt(data.ID, 10)
+			})
 
-			It("create object attribute bk_obj_id='cc_obj' and bk_property_id='test_biz' and bk_property_name='test_biz' and invalid PropertyGroup with bizID",
-				func() {
-					input := &metadata.ObjAttDes{
-						Attribute: metadata.Attribute{
-							OwnerID:       "0",
-							ObjectID:      "cc_obj",
-							PropertyID:    "test_biz",
-							PropertyName:  "test_biz",
-							PropertyGroup: "abcdefg",
-							IsEditable:    true,
-							PropertyType:  "singlechar",
-							BizID:         bizIdInt,
-						},
-					}
-					rsp, err := apiServerClient.CreateObjectAtt(context.Background(), header, input)
-					util.RegisterResponseWithRid(rsp, header)
-					Expect(err).NotTo(HaveOccurred())
-					Expect(rsp.Result).To(Equal(true))
-					j, err := json.Marshal(rsp.Data)
-					data := metadata.Attribute{}
-					json.Unmarshal(j, &data)
-					Expect(data.ObjectID).To(Equal(input.ObjectID))
-					Expect(data.PropertyID).To(Equal(input.PropertyID))
-					Expect(data.PropertyName).To(Equal(input.PropertyName))
-					Expect(data.PropertyGroup).To(Equal("bizdefault"))
-					Expect(data.IsEditable).To(Equal(input.IsEditable))
-					Expect(data.PropertyType).To(Equal(input.PropertyType))
-					Expect(data.OwnerID).To(Equal(input.OwnerID))
-				})
+			It("create object attribute bk_obj_id='cc_obj' and bk_property_id='test_biz' and bk_property_name='test_biz' and invalid PropertyGroup with bizID", func() {
+				input := &metadata.ObjAttDes{
+					Attribute: metadata.Attribute{
+						OwnerID:       "0",
+						ObjectID:      "cc_obj",
+						PropertyID:    "test_biz",
+						PropertyName:  "test_biz",
+						PropertyGroup: "abcdefg",
+						IsEditable:    true,
+						PropertyType:  "singlechar",
+						BizID:         bizIdInt,
+					},
+				}
+				rsp, err := apiServerClient.CreateObjectAtt(context.Background(), header, input)
+				util.RegisterResponse(rsp)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(rsp.Result).To(Equal(true))
+				j, err := json.Marshal(rsp.Data)
+				data := metadata.Attribute{}
+				json.Unmarshal(j, &data)
+				Expect(data.ObjectID).To(Equal(input.ObjectID))
+				Expect(data.PropertyID).To(Equal(input.PropertyID))
+				Expect(data.PropertyName).To(Equal(input.PropertyName))
+				Expect(data.PropertyGroup).To(Equal("bizdefault"))
+				Expect(data.IsEditable).To(Equal(input.IsEditable))
+				Expect(data.PropertyType).To(Equal(input.PropertyType))
+				Expect(data.OwnerID).To(Equal(input.OwnerID))
+			})
 
 			It("update object attribute id="+attrId1, func() {
 				input := map[string]interface{}{
 					"bk_property_name": "ayayyaya",
 				}
 				rsp, err := apiServerClient.UpdateObjectAtt(context.Background(), attrId1, header, input)
-				util.RegisterResponseWithRid(rsp, header)
+				util.RegisterResponse(rsp)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(rsp.Result).To(Equal(true))
 			})
@@ -1024,14 +1019,14 @@ var _ = Describe("object test", func() {
 					"bk_property_name": "test_sglchar",
 				}
 				rsp, err := apiServerClient.UpdateObjectAtt(context.Background(), attrId1, header, input)
-				util.RegisterResponseWithRid(rsp, header)
+				util.RegisterResponse(rsp)
 				Expect(err).Should(BeNil())
 				Expect(rsp.Result).To(Equal(false))
 			})
 
 			It("delete object attribute id="+attrId, func() {
 				rsp, err := apiServerClient.DeleteObjectAtt(context.Background(), attrId, header)
-				util.RegisterResponseWithRid(rsp, header)
+				util.RegisterResponse(rsp)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(rsp.Result).To(Equal(true))
 			})
@@ -1041,7 +1036,7 @@ var _ = Describe("object test", func() {
 					"bk_obj_id": "cc_obj",
 				}
 				rsp, err := apiServerClient.GetObjectAttr(context.Background(), header, input)
-				util.RegisterResponseWithRid(rsp, header)
+				util.RegisterResponse(rsp)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(rsp.Result).To(Equal(true))
 				j, err := json.Marshal(rsp.Data)
@@ -1068,7 +1063,7 @@ var _ = Describe("object test", func() {
 					"data": arr,
 				}
 				rsp, err := objectClient.UpdatePropertyGroupObjectAtt(context.Background(), header, input)
-				util.RegisterResponseWithRid(rsp, header)
+				util.RegisterResponse(rsp)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(rsp.Result).To(Equal(true))
 			})
@@ -1085,7 +1080,7 @@ var _ = Describe("object test", func() {
 					"data": arr,
 				}
 				rsp, err := objectClient.UpdatePropertyGroupObjectAtt(context.Background(), header, input)
-				util.RegisterResponseWithRid(rsp, header)
+				util.RegisterResponse(rsp)
 				Expect(err).Should(BeNil())
 				Expect(rsp.Result).To(Equal(false))
 			})
@@ -1096,7 +1091,7 @@ var _ = Describe("object test", func() {
 					"bk_property_id": "test_singlechar",
 				}
 				rsp, err := apiServerClient.GetObjectAttr(context.Background(), header, input)
-				util.RegisterResponseWithRid(rsp, header)
+				util.RegisterResponse(rsp)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(rsp.Result).To(Equal(true))
 				j, err := json.Marshal(rsp.Data)
@@ -1105,9 +1100,8 @@ var _ = Describe("object test", func() {
 			})
 
 			It("delete object attribute property group with object", func() {
-				rsp, err := objectClient.DeletePropertyGroup(context.Background(), strconv.FormatInt(groupId, 10),
-					header)
-				util.RegisterResponseWithRid(rsp, header)
+				rsp, err := objectClient.DeletePropertyGroup(context.Background(), strconv.FormatInt(groupId, 10), header)
+				util.RegisterResponse(rsp)
 				Expect(err).Should(BeNil())
 				Expect(rsp.Result).To(Equal(false))
 			})
@@ -1115,7 +1109,7 @@ var _ = Describe("object test", func() {
 			It("search group bk_obj_id='cc_obj'", func() {
 				input := map[string]interface{}{}
 				rsp, err := objectClient.SelectPropertyGroupByObjectID(context.Background(), "cc_obj", header, input)
-				util.RegisterResponseWithRid(rsp, header)
+				util.RegisterResponse(rsp)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(rsp.Result).To(Equal(true))
 				j, err := json.Marshal(rsp.Data)
@@ -1124,9 +1118,8 @@ var _ = Describe("object test", func() {
 			})
 
 			It("delete object attribute property group", func() {
-				rsp, err := objectClient.DeletePropertyGroupObjectAtt(context.Background(), "0", "cc_obj",
-					"test_singlechar", "1", header)
-				util.RegisterResponseWithRid(rsp, header)
+				rsp, err := objectClient.DeletePropertyGroupObjectAtt(context.Background(), "0", "cc_obj", "test_singlechar", "1", header)
+				util.RegisterResponse(rsp)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(rsp.Result).To(Equal(true))
 			})
@@ -1137,7 +1130,7 @@ var _ = Describe("object test", func() {
 					"bk_property_id": "test_singlechar",
 				}
 				rsp, err := apiServerClient.GetObjectAttr(context.Background(), header, input)
-				util.RegisterResponseWithRid(rsp, header)
+				util.RegisterResponse(rsp)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(rsp.Result).To(Equal(true))
 				j, err := json.Marshal(rsp.Data)
@@ -1221,7 +1214,7 @@ var _ = Describe("object test", func() {
 				"bk_set_env":          "2",
 			}
 			rsp, err := instClient.CreateSet(context.Background(), 1000, header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).ShouldNot(BeNil())
 		})
 
@@ -1235,7 +1228,7 @@ var _ = Describe("object test", func() {
 				"bk_set_env":          "2",
 			}
 			rsp, err := instClient.CreateSet(context.Background(), bizIdInt, header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).ShouldNot(BeNil())
 		})
 
@@ -1248,7 +1241,7 @@ var _ = Describe("object test", func() {
 				"bk_set_env":          "2",
 			}
 			rsp, err := instClient.CreateSet(context.Background(), bizIdInt, header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).ShouldNot(BeNil())
 		})
 
@@ -1262,7 +1255,7 @@ var _ = Describe("object test", func() {
 				"bk_set_env":          "2",
 			}
 			rsp, err := instClient.CreateSet(context.Background(), 2, header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).ShouldNot(BeNil())
 		})
 
@@ -1317,16 +1310,13 @@ var _ = Describe("object test", func() {
 				},
 			}
 			rsp, err := instClient.SearchSet(context.Background(), "0", bizId, header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
-			Expect(map[string]interface{}(rsp.Data.Info[rsp.Data.Count-1])).To(HaveKeyWithValue("bk_set_name",
-				"new_test"))
-			Expect(map[string]interface{}(rsp.Data.Info[rsp.Data.Count-1])).To(HaveKeyWithValue("bk_service_status",
-				"1"))
+			Expect(map[string]interface{}(rsp.Data.Info[rsp.Data.Count-1])).To(HaveKeyWithValue("bk_set_name", "new_test"))
+			Expect(map[string]interface{}(rsp.Data.Info[rsp.Data.Count-1])).To(HaveKeyWithValue("bk_service_status", "1"))
 			Expect(map[string]interface{}(rsp.Data.Info[rsp.Data.Count-1])).To(HaveKeyWithValue("bk_set_env", "2"))
-			Expect(commonutil.GetStrByInterface(rsp.Data.Info[rsp.Data.Count-1]["bk_parent_id"])).To(Equal(strconv.FormatInt(childInstIdInt,
-				10)))
+			Expect(commonutil.GetStrByInterface(rsp.Data.Info[rsp.Data.Count-1]["bk_parent_id"])).To(Equal(strconv.FormatInt(childInstIdInt, 10)))
 
 			bizIdRes, err := commonutil.GetInt64ByInterface(rsp.Data.Info[rsp.Data.Count-1]["bk_biz_id"])
 			Expect(err).NotTo(HaveOccurred())
@@ -1341,7 +1331,7 @@ var _ = Describe("object test", func() {
 				Name:  "test",
 			}
 			rsp, err := instClient.SearchInstsNames(context.Background(), header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			nameMap := make(map[string]bool)
@@ -1359,7 +1349,7 @@ var _ = Describe("object test", func() {
 				Fields: []string{"bk_set_id", "bk_set_name"},
 			}
 			rsp, err := instClient.SearchSetBatch(context.Background(), bizId, header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			Expect(len(rsp.Data)).To(Equal(1))
@@ -1375,7 +1365,7 @@ var _ = Describe("object test", func() {
 				Condition: conds,
 			}
 			rsp, err := instClient.GetTopoNodeHostAndServiceInstCount(context.Background(), header, bizIdInt, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 		})
@@ -1440,7 +1430,7 @@ var _ = Describe("object test", func() {
 				"service_template_id": 0,
 			}
 			rsp, err := instClient.CreateModule(context.Background(), 1000, setIDInt, header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).To(HaveOccurred())
 		})
 
@@ -1452,7 +1442,7 @@ var _ = Describe("object test", func() {
 				"service_template_id": 0,
 			}
 			rsp, err := instClient.CreateModule(context.Background(), bizIdInt, 1000, header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).To(HaveOccurred())
 		})
 
@@ -1464,7 +1454,7 @@ var _ = Describe("object test", func() {
 				"service_template_id": 0,
 			}
 			rsp, err := instClient.CreateModule(context.Background(), 2, setIDInt, header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).To(HaveOccurred())
 		})
 
@@ -1476,7 +1466,7 @@ var _ = Describe("object test", func() {
 				"service_template_id": 0,
 			}
 			rsp, err := instClient.CreateModule(context.Background(), bizIdInt, setIDInt, header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).To(HaveOccurred())
 		})
 
@@ -1487,7 +1477,7 @@ var _ = Describe("object test", func() {
 				"service_template_id": 0,
 			}
 			rsp, err := instClient.CreateModule(context.Background(), bizIdInt, setIDInt, header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).To(HaveOccurred())
 		})
 
@@ -1543,7 +1533,7 @@ var _ = Describe("object test", func() {
 				},
 			}
 			rsp, err := instClient.SearchModule(context.Background(), "0", bizIdInt, setIDInt, header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Count).To(Equal(1))
 			Expect(map[string]interface{}(rsp.Info[0])).To(HaveKeyWithValue("bk_module_name", "new_module"))
@@ -1562,7 +1552,7 @@ var _ = Describe("object test", func() {
 				},
 			}
 			rsp, err := instClient.SearchModuleByCondition(context.Background(), bizId, header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			Expect(rsp.Data.Count).To(Equal(1))
@@ -1577,7 +1567,7 @@ var _ = Describe("object test", func() {
 				Fields: []string{"bk_module_id", "bk_module_name", "bk_set_id", "service_template_id"},
 			}
 			rsp, err := instClient.SearchModuleBatch(context.Background(), bizId, header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			Expect(len(rsp.Data)).To(Equal(1))
@@ -1603,7 +1593,7 @@ var _ = Describe("object test", func() {
 				},
 			}
 			rsp, err := topoServerClient.Instance().SearchModuleWithRelation(context.Background(), bizId, header, input)
-			util.RegisterResponseWithRid(rsp, header)
+			util.RegisterResponse(rsp)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(rsp.Result).To(Equal(true))
 			Expect(rsp.Data.Count).To(Equal(1))

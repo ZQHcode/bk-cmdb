@@ -42,7 +42,7 @@ var _ = Describe("namespace test", func() {
 	nsName := "nsName"
 
 	It("prepare environment, create business, cluster", func() {
-		test.DeleteAllBizs()
+		test.ClearDatabase()
 
 		biz := map[string]interface{}{
 			common.BKMaintainersField: "kube",
@@ -67,9 +67,8 @@ var _ = Describe("namespace test", func() {
 		vpc := "vpc-q6awe02n"
 		environment := "prod"
 		network := []string{"1.1.1.0/21"}
-		clusterType := types.IndependentClusterType
-		createCluster := &types.Cluster{
-			BizID:            bizID,
+		clusterType := "public"
+		createCLuster := &types.Cluster{
 			Name:             &clusterName,
 			SchedulingEngine: &schedulingEngine,
 			Uid:              &uid,
@@ -83,8 +82,8 @@ var _ = Describe("namespace test", func() {
 			Type:             &clusterType,
 		}
 
-		id, err := kubeClient.CreateCluster(ctx, header, createCluster)
-		util.RegisterResponseWithRid(id, header)
+		id, err := kubeClient.CreateCluster(ctx, header, bizID, createCLuster)
+		util.RegisterResponse(id)
 		Expect(err).NotTo(HaveOccurred())
 		clusterID = id
 
@@ -120,11 +119,10 @@ var _ = Describe("namespace test", func() {
 			ResourceQuotas: &resourceQuotas,
 		}
 		createOpt := types.NsCreateOption{
-			BizID: bizID,
-			Data:  []types.Namespace{ns},
+			Data: []types.Namespace{ns},
 		}
 
-		result, err := kubeClient.CreateNamespace(ctx, header, &createOpt)
+		result, err := kubeClient.CreateNamespace(ctx, header, bizID, &createOpt)
 		util.RegisterResponseWithRid(result, header)
 		Expect(err).NotTo(HaveOccurred())
 		namespaceID = result.IDs[0]
@@ -160,15 +158,11 @@ var _ = Describe("namespace test", func() {
 			ResourceQuotas: &resourceQuotas,
 		}
 		updateOpt := types.NsUpdateOption{
-			BizID: bizID,
-			NsUpdateByIDsOption: types.NsUpdateByIDsOption{
-				IDs:  []int64{namespaceID},
-				Data: ns,
-			},
+			IDs:  []int64{clusterID},
+			Data: ns,
 		}
 
-		err := kubeClient.UpdateNamespace(ctx, header, &updateOpt)
-		util.RegisterResponseWithRid(err, header)
+		err := kubeClient.UpdateNamespace(ctx, header, bizID, &updateOpt)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
@@ -207,12 +201,11 @@ var _ = Describe("namespace test", func() {
 		}
 		fields := []string{common.BKFieldID}
 		queryOpt := types.NsQueryOption{
-			BizID:  bizID,
 			Filter: filter,
 			Page:   page,
 			Fields: fields,
 		}
-		result, err := kubeClient.ListNamespace(ctx, header, &queryOpt)
+		result, err := kubeClient.ListNamespace(ctx, header, bizID, &queryOpt)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(len(result.Info)).To(Equal(1))
 		Expect(result.Info[0][common.BKFieldID].(json.Number).Int64()).To(Equal(namespaceID))
@@ -222,27 +215,23 @@ var _ = Describe("namespace test", func() {
 			EnableCount: true,
 		}
 		queryOpt = types.NsQueryOption{
-			BizID:  bizID,
 			Filter: filter,
 			Page:   page,
 		}
 		queryOpt.Page.EnableCount = true
-		result, err = kubeClient.ListNamespace(ctx, header, &queryOpt)
+		result, err = kubeClient.ListNamespace(ctx, header, bizID, &queryOpt)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(result.Count).To(Equal(1))
 	})
 
 	It("delete namespace", func() {
 		deleteOpt := types.NsDeleteOption{
-			BizID: bizID,
-			NsDeleteByIDsOption: types.NsDeleteByIDsOption{
-				IDs: []int64{
-					namespaceID,
-				},
+			IDs: []int64{
+				namespaceID,
 			},
 		}
 
-		err := kubeClient.DeleteNamespace(ctx, header, &deleteOpt)
+		err := kubeClient.DeleteNamespace(ctx, header, bizID, &deleteOpt)
 		Expect(err).NotTo(HaveOccurred())
 	})
 })

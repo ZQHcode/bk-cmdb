@@ -109,13 +109,6 @@ func (w *GameDeployment) ValidateCreate() ccErr.RawErrorInfo {
 		}
 	}
 
-	if w.BizID == 0 {
-		return ccErr.RawErrorInfo{
-			ErrCode: common.CCErrCommParamsNeedSet,
-			Args:    []interface{}{common.BKAppIDField},
-		}
-	}
-
 	if err := ValidateCreate(*w, GameDeploymentFields); err.ErrCode != 0 {
 		return err
 	}

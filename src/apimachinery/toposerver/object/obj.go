@@ -16,7 +16,6 @@ import (
 	"context"
 	"net/http"
 
-	"configcenter/src/common/errors"
 	"configcenter/src/common/metadata"
 )
 
@@ -116,24 +115,18 @@ func (t *object) UpdateObject(ctx context.Context, objID string, h http.Header,
 	return
 }
 
-// DeleteObject delete object
-func (t *object) DeleteObject(ctx context.Context, objID string, h http.Header) error {
-	resp := new(metadata.Response)
+// DeleteObject TODO
+func (t *object) DeleteObject(ctx context.Context, objID string, h http.Header,
+	data map[string]interface{}) (resp *metadata.Response, err error) {
+	resp = new(metadata.Response)
 	subPath := "/delete/object/%s"
 
-	err := t.client.Delete().
+	err = t.client.Delete().
 		WithContext(ctx).
-		Body(nil).
+		Body(data).
 		SubResourcef(subPath, objID).
 		WithHeaders(h).
 		Do().
 		Into(resp)
-
-	if err != nil {
-		return errors.CCHttpError
-	}
-	if resp.CCError() != nil {
-		return resp.CCError()
-	}
-	return nil
+	return
 }

@@ -39,7 +39,7 @@ type ApiServerClientInterface interface {
 	AddDefaultApp(ctx context.Context, h http.Header, ownerID string, params mapstr.MapStr) (resp *metadata.Response,
 		err error)
 	SearchDefaultApp(ctx context.Context, h http.Header, ownerID string) (resp *metadata.QueryInstResult, err error)
-	GetObjectData(ctx context.Context, h http.Header, cond *metadata.ExportObjectCondition) (
+	GetObjectData(ctx context.Context, h http.Header, params mapstr.MapStr) (
 		resp *metadata.ObjectAttrBatchResult, err error)
 	GetInstDetail(ctx context.Context, h http.Header, objID string, params mapstr.MapStr) (
 		resp *metadata.QueryInstResult, err error)
@@ -56,14 +56,15 @@ type ApiServerClientInterface interface {
 	GetObjectGroup(ctx context.Context, h http.Header, ownerID, objID string,
 		params mapstr.MapStr) (resp *metadata.ObjectAttrGroupResult, err error)
 	AddHost(ctx context.Context, h http.Header, params mapstr.MapStr) (resp *metadata.ResponseDataMapStr, err error)
-	AddHostByExcel(ctx context.Context, h http.Header, params mapstr.MapStr) (resp *metadata.ImportInstResp, err error)
-	UpdateHost(ctx context.Context, h http.Header, params mapstr.MapStr) (resp *metadata.ImportInstResp, err error)
+	AddHostByExcel(ctx context.Context, h http.Header, params mapstr.MapStr) (resp *metadata.ResponseDataMapStr,
+		err error)
+	UpdateHost(ctx context.Context, h http.Header, params mapstr.MapStr) (resp *metadata.ResponseDataMapStr, err error)
 	GetHostModuleRelation(ctx context.Context, h http.Header, params mapstr.MapStr) (resp *metadata.HostModuleResp,
 		err error)
 	AddInst(ctx context.Context, h http.Header, ownerID, objID string,
 		params mapstr.MapStr) (resp *metadata.ResponseDataMapStr, err error)
 	AddInstByImport(ctx context.Context, h http.Header, ownerID, objID string, params mapstr.MapStr) (
-		*metadata.ImportInstResp, error)
+		*metadata.ResponseDataMapStr, error)
 	AddObjectBatch(ctx context.Context, h http.Header, params mapstr.MapStr) (resp *metadata.Response, err error)
 	SearchAssociationInst(ctx context.Context, h http.Header,
 		request *metadata.SearchAssociationInstRequest) (resp *metadata.SearchAssociationInstResult, err error)
@@ -90,16 +91,16 @@ type ApiServerClientInterface interface {
 		h http.Header) errors.CCErrorCoder
 	UpdateBizPropertyBatch(ctx context.Context, h http.Header, param metadata.UpdateBizPropertyBatchParameter) (
 		resp *metadata.Response, err error)
-	DeleteBiz(ctx context.Context, h http.Header, param metadata.DeleteBizParam) error
+	DeleteBiz(ctx context.Context, h http.Header, param metadata.DeleteBizParam) (resp *metadata.Response, err error)
 	SearchBiz(ctx context.Context, ownerID string, h http.Header,
 		s *params.SearchParams) (resp *metadata.SearchInstResult, err error)
 
-	ReadModuleAssociation(ctx context.Context, h http.Header, cond *metadata.QueryCondition) (*metadata.AsstResult,
-		errors.CCErrorCoder)
+	ReadModuleAssociation(ctx context.Context, h http.Header, input *metadata.QueryCondition) (resp *metadata.
+		SearchAsstModelResp, err error)
 	ReadModel(ctx context.Context, h http.Header, input *metadata.QueryCondition) (*metadata.QueryModelDataResult,
 		errors.CCErrorCoder)
-	ReadInstance(ctx context.Context, h http.Header, objID string, input *metadata.QueryCondition) (
-		resp *metadata.QueryConditionResult, err error)
+	ReadInstance(ctx context.Context, h http.Header, objID string, input *metadata.QueryCondition) (resp *metadata.
+		QueryConditionResult, err error)
 	SearchObjectUnique(ctx context.Context, objID string, h http.Header) (resp *metadata.SearchUniqueResult, err error)
 
 	FindAssociationByObjectAssociationID(ctx context.Context, h http.Header, objID string,
@@ -115,9 +116,6 @@ type ApiServerClientInterface interface {
 
 	SearchCloudArea(ctx context.Context, h http.Header, params metadata.CloudAreaSearchParam) (
 		*metadata.SearchDataResult, error)
-
-	SearchPlatformSetting(ctx context.Context, h http.Header, status string) (resp *metadata.PlatformSettingResult,
-		err error)
 }
 
 // NewApiServerClientInterface TODO

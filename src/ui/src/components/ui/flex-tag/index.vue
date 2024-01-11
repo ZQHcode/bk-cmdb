@@ -27,10 +27,6 @@
       type: Boolean,
       default: false
     },
-    isTagStyle: {
-      type: Boolean,
-      default: false
-    },
     maxWidth: {
       type: String,
       default: '400px'
@@ -50,14 +46,6 @@
     popoverOptions: {
       type: Object,
       default: () => ({})
-    },
-    popoverMaxHeight: {
-      type: String,
-      default: '280px'
-    },
-    forceShowOne: {
-      type: Boolean,
-      default: false
     }
   })
 
@@ -92,22 +80,14 @@
         placement: 'top',
         boundary: 'window',
         arrow: true,
-        theme: `${(props.isLinkStyle || props.isTagStyle) ? 'light' : 'dark'} flex-tag-tooltip`,
+        theme: `${props.isLinkStyle ? 'light' : 'dark'} flex-tag-tooltip`,
         interactive: true,
         ...props.popoverOptions,
         onShow(inst) {
           const contentEl = document.createElement('div')
           const fragment = document.createDocumentFragment()
           contentEl.classList.add('flex-tag-tips-content')
-          if (props.isLinkStyle) {
-            contentEl.classList.add('is-link')
-          }
-          if (props.isTagStyle) {
-            contentEl.classList.add('is-tag')
-          }
           contentEl.style.setProperty('--fontSize', props.fontSize)
-          contentEl.style.setProperty('--height', props.height)
-          contentEl.style.setProperty('--popoverMaxHeight', props.popoverMaxHeight)
 
           tipTagList.value.forEach((text, index) => {
             if (props.popoverOptions.appendTo === 'parent') {
@@ -123,6 +103,7 @@
               const itemEl = document.createElement('div')
               itemEl.classList.add('flex-tag-tips-item')
               if (props.isLinkStyle) {
+                itemEl.classList.add('is-link')
                 itemEl.addEventListener('click', () => handleClick(index), false)
               }
               itemEl.textContent = text.name || text
@@ -137,8 +118,8 @@
           // 将元素替换回去
           if (props.popoverOptions.appendTo === 'parent') {
             tipTagList.value.forEach(() => {
-              const cloneTagItems = Array.from(containerEl.value?.querySelectorAll('.tag-item.clone'))
-              const popverTagItems = Array.from(inst.popperChildren.content?.querySelectorAll('.tag-item'))
+              const cloneTagItems = Array.from(containerEl.value.querySelectorAll('.tag-item.clone'))
+              const popverTagItems = Array.from(inst.popperChildren.content.querySelectorAll('.tag-item'))
               containerEl.value.replaceChild(popverTagItems.shift(), cloneTagItems.shift())
             })
           }
@@ -173,9 +154,6 @@
 
       for (const item of tagWidthList) {
         accWidth = accWidth + item.width + gapWidth.value
-        if (props.forceShowOne && item.index === 0) {
-          continue
-        }
         if (accWidth > containerClientWidth) {
           posItem = item
           ellipsisCount.value = tags.value.length - item.index
@@ -259,12 +237,7 @@
 
 <template>
   <ul
-    :class="['flex-tag', {
-      changing,
-      'is-link-style': isLinkStyle,
-      'is-text-style': isTextStyle,
-      'is-tag-style': isTagStyle
-    }]"
+    :class="['flex-tag', { changing, 'is-link-style': isLinkStyle, 'is-text-style': isTextStyle }]"
     ref="containerEl"
     :style="{
       '--fontSize': fontSize,
@@ -272,11 +245,11 @@
       '--maxWidth': maxWidth,
       '--height': height
     }">
-    <li class="tag-item"
+    <li class="tag-item" v-bk-overflow-tips
       v-for="(tag, index) in tags"
       :key="tag.id || index"
       @click="handleClick(index)">
-      <div class="tag-item-text" v-bk-overflow-tips>
+      <div class="tag-item-text">
         <span @click="handleClickText(tag)">{{tag.name || tag}}</span>
         <slot name="text-append" v-bind="tag"></slot>
       </div>
@@ -297,19 +270,15 @@
       background: #F0F1F5;
       border-radius: 2px;
       padding: 0 .6em;
+      white-space: nowrap;
       flex: none;
+      overflow: hidden;
+      text-overflow: ellipsis;
       height: var(--height);
       line-height: var(--height);
       max-width: var(--maxWidth);
       display: flex;
       align-items: center;
-
-      .tag-item-text {
-        width: 100%;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
     }
 
     &.is-link-style {
@@ -398,32 +367,16 @@
 <style lang="scss">
   .flex-tag-tooltip-theme {
     .flex-tag-tips-content {
-      padding: .3em;
+      padding: .2em;
       font-size: var(--fontSize);
       display: flex;
       flex-direction: column;
       gap: 6px;
-      max-height: var(--popoverMaxHeight);
-      @include scrollbar-y;
 
-      &.is-link {
-        .flex-tag-tips-item {
+      .flex-tag-tips-item {
+        &.is-link {
           color: #3A84FF;
           cursor: pointer;
-        }
-      }
-
-      &.is-tag {
-        padding: .5em;
-
-        .flex-tag-tips-item {
-          margin-right: auto;
-          height: var(--height);
-          line-height: var(--height);
-          color: #63656E;
-          background: #F0F1F5;
-          border-radius: 2px;
-          padding: 0 .6em;
         }
       }
 

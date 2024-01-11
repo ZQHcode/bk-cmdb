@@ -10,26 +10,16 @@
  * limitations under the License.
 -->
 
-<script setup>
-  import { t } from '@/i18n'
-
-  defineProps({
-    current: Number
-  })
-
-  const steps = [
-    { title: t('属性设置step'), icon: 1 },
-    { title: t('信息确认step'), icon: 2 },
-    { title: t('属性应用step'), icon: 3 }
-  ]
-</script>
-
-<template>
+<template functional>
   <div class="top-steps">
     <bk-steps
       class="steps"
-      :steps="steps"
-      :cur-step="current">
+      :steps="[
+        { title: '属性设置', icon: 1 },
+        { title: '信息确认', icon: 2 },
+        { title: '属性应用', icon: 3 }
+      ]"
+      :cur-step="props.current">
     </bk-steps>
   </div>
 </template>

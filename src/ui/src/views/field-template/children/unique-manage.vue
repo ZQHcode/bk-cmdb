@@ -420,7 +420,6 @@
 
       .compose-form {
         flex: 1;
-        width: calc(100% - 50px);
 
         .rule-type {
           width: 96px

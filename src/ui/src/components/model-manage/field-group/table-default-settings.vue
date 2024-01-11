@@ -17,7 +17,6 @@
   import IconTextButton from '@/components/ui/button/icon-text-button.vue'
   import PropertyFormElement from '@/components/ui/form/property-form-element.vue'
   import { getPropertyDefaultValue, isShowOverflowTips, getPropertyDefaultEmptyValue, formatValues } from '@/utils/tools.js'
-  import { keyupCallMethod } from '@/utils/util'
 
   const props = defineProps({
     defaults: {
@@ -215,7 +214,6 @@
             :row="1"
             :must-required="false"
             error-display-type="tooltips"
-            @keyup.native="(event) => keyupCallMethod(event, () => handleConfirm($index))"
             v-model="editState.row[$index][prop.bk_property_id]">
           </property-form-element>
         </template>

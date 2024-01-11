@@ -23,8 +23,7 @@ export default {
       type: Array,
       required: true
     },
-    isContainerHost: Boolean,
-    bizId: Number
+    isContainerHost: Boolean
   },
   data() {
     return {
@@ -56,8 +55,8 @@ export default {
 
       return this.selection.map((row) => {
         if (this.isContainerHost) {
-          // 容器主机默认先按业务主机鉴权
-          return bizHostAuth(this.bizId, row?.host?.bk_host_id)
+          // TODO: 判断是否为业务主机返回不同的auth
+          return bizHostAuth(row.bk_biz_id, row.bk_host_id)
         }
 
         const { host, biz, module } = row
@@ -69,6 +68,9 @@ export default {
       })
     },
     hostIds() {
+      if (this.isContainerHost) {
+        return this.selection.map(row => row.bk_host_id).join(',')
+      }
       return this.selection.map(row => row.host.bk_host_id).join(',')
     }
   },

@@ -61,7 +61,6 @@
   import { MENU_BUSINESS } from '@/dictionary/menu-symbol'
   import businessSetService from '@/service/business-set/index.js'
   import routerActions from '@/router/actions'
-  import { escapeRegexChar } from '@/utils/util'
   import { t } from '@/i18n'
 
   export default defineComponent({
@@ -123,7 +122,7 @@
             rules: [{
               field: 'bk_biz_name',
               operator: 'contains',
-              value: escapeRegexChar(keyword.value),
+              value: keyword.value,
             }]
           }
         }

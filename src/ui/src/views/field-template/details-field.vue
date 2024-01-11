@@ -53,10 +53,6 @@
     }
     return fieldList.value
   })
-
-  const handleClearFilter = () => {
-    filterWord.value = ''
-  }
 </script>
 
 <template>
@@ -66,7 +62,7 @@
       v-model="filterWord"
       :placeholder="$t('请输入字段名称')"
       :right-icon="'bk-icon icon-search'" />
-    <div class="field-list" v-if="displayFieldList.length">
+    <div class="field-list">
       <field-card
         v-for="(field, index) in displayFieldList"
         class="details-field-card"
@@ -77,12 +73,6 @@
         :deletable="false">
       </field-card>
     </div>
-    <cmdb-table-empty
-      v-else
-      slot="empty"
-      :stuff="{ type: 'search' }"
-      @clear="handleClearFilter"
-    ></cmdb-table-empty>
   </div>
 </template>
 

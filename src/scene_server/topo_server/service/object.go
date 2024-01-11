@@ -25,7 +25,6 @@ import (
 	"configcenter/src/common/http/rest"
 	"configcenter/src/common/mapstr"
 	"configcenter/src/common/metadata"
-	"configcenter/src/storage/driver/redis"
 )
 
 // CreateObjectBatch batch to create some objects
@@ -125,9 +124,7 @@ func (s *Service) CreateObject(ctx *rest.Contexts) {
 				Name:    rsp.ObjectName,
 				Creator: ctx.Kit.User,
 			}}
-
-			err = s.AuthManager.CreateObjectOnIAM(ctx.Kit.Ctx, ctx.Kit.Header, objects, iamInstances, redis.Client())
-			if err != nil {
+			if err := s.AuthManager.CreateObjectOnIAM(ctx.Kit.Ctx, ctx.Kit.Header, objects, iamInstances); err != nil {
 				blog.ErrorJSON("create object on iam failed, objects: %s, iam instances: %s, err: %s, rid: %s",
 					objects, iamInstances, err, ctx.Kit.Rid)
 				return err
@@ -222,8 +219,7 @@ func (s *Service) UpdateObject(ctx *rest.Contexts) {
 			}
 
 			objects := []metadata.Object{resp.Info[0]}
-			err = s.AuthManager.Viewer.UpdateView(ctx.Kit.Ctx, ctx.Kit.Header, objects, redis.Client(), ctx.Kit.Rid)
-			if err != nil {
+			if err := s.AuthManager.Viewer.UpdateView(ctx.Kit.Ctx, ctx.Kit.Header, objects); err != nil {
 				blog.Errorf("update view failed, err: %s, rid: %s", err, ctx.Kit.Rid)
 				return err
 			}
@@ -269,8 +265,7 @@ func (s *Service) DeleteObject(ctx *rest.Contexts) {
 		objects := []metadata.Object{*obj}
 		// use new transaction, need a new header
 		ctx.Kit.Header = ctx.Kit.NewHeader()
-		err = s.AuthManager.Viewer.DeleteView(ctx.Kit.Ctx, ctx.Kit.Header, objects, redis.Client(), ctx.Kit.Rid)
-		if err != nil {
+		if err := s.AuthManager.Viewer.DeleteView(ctx.Kit.Ctx, ctx.Kit.Header, objects); err != nil {
 			blog.Errorf("delete view failed, err: %s, rid: %s", err, ctx.Kit.Rid)
 		}
 	}
@@ -388,7 +383,7 @@ func (s *Service) CreateManyObject(ctx *rest.Contexts) {
 					Creator: ctx.Kit.User,
 				})
 			}
-			err := s.AuthManager.CreateObjectOnIAM(ctx.Kit.Ctx, ctx.Kit.Header, rsp, iamInstances, redis.Client())
+			err := s.AuthManager.CreateObjectOnIAM(ctx.Kit.Ctx, ctx.Kit.Header, rsp, iamInstances)
 			if err != nil {
 				blog.Errorf("create object on iam failed, objects: %v, iam instances: %v, err: %v, rid: %s",
 					rsp, iamInstances, err, ctx.Kit.Rid)

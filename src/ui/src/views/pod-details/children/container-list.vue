@@ -40,10 +40,7 @@
         header: [],
         selection: [],
         sort: MODEL_ID_KEY,
-        pagination: getDefaultPaginationConfig(),
-        stuff: {
-          type: 'default'
-        }
+        pagination: getDefaultPaginationConfig()
       })
 
       const columnsConfig = reactive({
@@ -138,12 +135,21 @@
       const getSearchParams = () => {
         const params = {
           bk_biz_id: bizId.value,
-          bk_pod_id: podId.value,
           fields: table.header.map(item => item.id),
           page: {
             start: table.pagination.limit * (table.pagination.current - 1),
             limit: table.pagination.limit,
             sort: table.sort
+          },
+          filter: {
+            condition: 'AND',
+            rules: [
+              {
+                field: 'bk_pod_id',
+                operator: 'equal',
+                value: podId.value
+              }
+            ]
           }
         }
 
@@ -156,13 +162,8 @@
 
         const { conditions } = transformGeneralModelCondition(condition, properties.value)
 
-        table.stuff.type = 'default'
         if (conditions) {
-          table.stuff.type = 'search'
-          params.filter = {
-            condition: 'AND',
-            rules: conditions.rules
-          }
+          params.filter.rules.push(...conditions.rules)
         }
 
         return params
@@ -247,11 +248,6 @@
         })
       }
 
-      const handleClearFilter = () => {
-        filter.value = ''
-        getList()
-      }
-
       return {
         requestIds,
         tableRef,
@@ -266,8 +262,7 @@
         handleSelectionChange,
         handleHeaderClick,
         handleSearch,
-        handleCopy,
-        handleClearFilter
+        handleCopy
       }
     }
   })
@@ -323,14 +318,6 @@
         </template>
       </bk-table-column>
       <bk-table-column type="setting"></bk-table-column>
-      <cmdb-table-empty
-        slot="empty"
-        :stuff="table.stuff"
-        @clear="handleClearFilter">
-        <bk-exception type="empty" scene="part">
-          <p>{{ $t('暂无数据') }}</p>
-        </bk-exception>
-      </cmdb-table-empty>
     </bk-table>
   </div>
 </template>

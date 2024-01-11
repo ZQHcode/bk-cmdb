@@ -80,8 +80,6 @@ const (
 	AttributeFieldLastTime = "last_time"
 	// AttributeFieldDefault attribute default value field
 	AttributeFieldDefault = "default"
-	// AttributeFieldIsMultiple the is multiple name field
-	AttributeFieldIsMultiple = "ismultiple"
 )
 
 const (
@@ -165,46 +163,53 @@ type HostObjAttDes struct {
 	HostApplyEnabled bool `json:"host_apply_enabled"`
 }
 
-// Validate Attribute
+// Validate TODO
 func (attribute *Attribute) Validate(ctx context.Context, data interface{}, key string) errors.RawErrorInfo {
-	var attrValidatorMap = map[string]func(context.Context, interface{}, string) errors.RawErrorInfo{
-		common.FieldTypeSingleChar:   attribute.validChar,
-		common.FieldTypeLongChar:     attribute.validLongChar,
-		common.FieldTypeInt:          attribute.validInt,
-		common.FieldTypeFloat:        attribute.validFloat,
-		common.FieldTypeEnum:         attribute.validEnum,
-		common.FieldTypeEnumMulti:    attribute.validEnumMulti,
-		common.FieldTypeEnumQuote:    attribute.validEnumQuote,
-		common.FieldTypeDate:         attribute.validDate,
-		common.FieldTypeTime:         attribute.validTime,
-		common.FieldTypeTimeZone:     attribute.validTimeZone,
-		common.FieldTypeBool:         attribute.validBool,
-		common.FieldTypeUser:         attribute.validUser,
-		common.FieldTypeList:         attribute.validList,
-		common.FieldObject:           attribute.validObjectCondition,
-		common.FieldTypeOrganization: attribute.validOrganization,
-		common.FieldTypeInnerTable:   attribute.validInnerTable,
-	}
-
 	rawError := errors.RawErrorInfo{}
 	fieldType := attribute.PropertyType
 	switch fieldType {
+	case common.FieldTypeSingleChar:
+		rawError = attribute.validChar(ctx, data, key)
+	case common.FieldTypeLongChar:
+		rawError = attribute.validLongChar(ctx, data, key)
+	case common.FieldTypeInt:
+		rawError = attribute.validInt(ctx, data, key)
+	case common.FieldTypeFloat:
+		rawError = attribute.validFloat(ctx, data, key)
+	case common.FieldTypeEnum:
+		rawError = attribute.validEnum(ctx, data, key)
+	case common.FieldTypeEnumMulti:
+		rawError = attribute.validEnumMulti(ctx, data, key)
+	case common.FieldTypeEnumQuote:
+		rawError = attribute.validEnumQuote(ctx, data, key)
+	case common.FieldTypeDate:
+		rawError = attribute.validDate(ctx, data, key)
+	case common.FieldTypeTime:
+		rawError = attribute.validTime(ctx, data, key)
+	case common.FieldTypeTimeZone:
+		rawError = attribute.validTimeZone(ctx, data, key)
+	case common.FieldTypeBool:
+		rawError = attribute.validBool(ctx, data, key)
+	case common.FieldTypeUser:
+		rawError = attribute.validUser(ctx, data, key)
+	case common.FieldTypeList:
+		rawError = attribute.validList(ctx, data, key)
+	case common.FieldObject:
+		rawError = attribute.validObjectCondition(ctx, data, key)
+	case common.FieldTypeOrganization:
+		rawError = attribute.validOrganization(ctx, data, key)
 	case "foreignkey", "singleasst", "multiasst":
 		// TODO what validation should do on these types
 	case common.FieldTypeTable:
 		// TODO what validation should do on these types
 		rawError = attribute.validTable(ctx, data, key)
+	case common.FieldTypeInnerTable:
+		rawError = attribute.validInnerTable(ctx, data, key)
 	default:
-		validator, exists := attrValidatorMap[fieldType]
-		if !exists {
-			rawError = errors.RawErrorInfo{
-				ErrCode: common.CCErrCommUnexpectedFieldType,
-				Args:    []interface{}{fieldType},
-			}
-			break
+		rawError = errors.RawErrorInfo{
+			ErrCode: common.CCErrCommUnexpectedFieldType,
+			Args:    []interface{}{fieldType},
 		}
-
-		rawError = validator(ctx, data, key)
 	}
 	// 如果出现了问题，并且报错原内容为propertyID，则替换为propertyName。
 	if rawError.ErrCode != 0 {
@@ -298,7 +303,7 @@ func (attribute *Attribute) validEnum(ctx context.Context, val interface{}, key 
 	}
 
 	// validate within enum
-	enumOption, err := ParseEnumOption(attribute.Option)
+	enumOption, err := ParseEnumOption(ctx, attribute.Option)
 	if err != nil {
 		blog.Warnf("parse enum option failed, err: %v, rid: %s", err, rid)
 		return errors.RawErrorInfo{
@@ -335,7 +340,7 @@ func (attribute *Attribute) validEnumMulti(ctx context.Context, val interface{},
 		return errors.RawErrorInfo{}
 	}
 
-	enumOption, err := ParseEnumOption(attribute.Option)
+	enumOption, err := ParseEnumOption(ctx, attribute.Option)
 	if err != nil {
 		blog.Errorf("parse enum option failed, err: %v, rid: %s", err, rid)
 		return errors.RawErrorInfo{
@@ -507,16 +512,22 @@ func (attribute *Attribute) validInt(ctx context.Context, val interface{}, key s
 		}
 	}
 
-	intOption, err := ParseIntOption(attribute.Option)
+	intObjOption := ParseIntOption(ctx, attribute.Option)
+	if len(intObjOption.Min) == 0 || len(intObjOption.Max) == 0 {
+		return errors.RawErrorInfo{}
+	}
+
+	maxValue, err := strconv.ParseInt(intObjOption.Max, 10, 64)
 	if err != nil {
-		return errors.RawErrorInfo{
-			ErrCode: common.CCErrCommParamsIsInvalid,
-			Args:    []interface{}{err.Error()},
-		}
+		maxValue = common.MaxInt64
+	}
+	minValue, err := strconv.ParseInt(intObjOption.Min, 10, 64)
+	if err != nil {
+		minValue = common.MinInt64
 	}
 
 	value, _ := util.GetInt64ByInterface(val)
-	if value > intOption.Max || value < intOption.Min {
+	if value > maxValue || value < minValue {
 		blog.Errorf("params %s:%#v not valid, rid: %s", key, val, rid)
 		return errors.RawErrorInfo{
 			ErrCode: common.CCErrCommParamsInvalid,
@@ -551,15 +562,21 @@ func (attribute *Attribute) validFloat(ctx context.Context, val interface{}, key
 		}
 	}
 
-	floatOption, err := ParseFloatOption(attribute.Option)
-	if err != nil {
-		return errors.RawErrorInfo{
-			ErrCode: common.CCErrCommParamsIsInvalid,
-			Args:    []interface{}{err.Error()},
-		}
+	intObjOption := parseFloatOption(ctx, attribute.Option)
+	if len(intObjOption.Min) == 0 || len(intObjOption.Max) == 0 {
+		return errors.RawErrorInfo{}
 	}
 
-	if value > floatOption.Max || value < floatOption.Min {
+	maxValue, err := strconv.ParseFloat(intObjOption.Max, 64)
+	if err != nil {
+		maxValue = float64(common.MaxInt64)
+	}
+	minValue, err := strconv.ParseFloat(intObjOption.Min, 64)
+	if err != nil {
+		minValue = float64(common.MinInt64)
+	}
+
+	if value > maxValue || value < minValue {
 		blog.Errorf("params %s:%#v not valid, rid: %s", key, val, rid)
 		return errors.RawErrorInfo{
 			ErrCode: common.CCErrCommParamsInvalid,
@@ -901,45 +918,57 @@ func (attribute *Attribute) validOrganization(ctx context.Context, val interface
 
 	switch org := val.(type) {
 	case []interface{}:
-		if rawErr := attribute.validOrganizationValue(org, key, rid); rawErr.ErrCode != 0 {
-			return rawErr
+		if len(org) == 0 && attribute.IsRequired {
+			blog.Errorf("org is required, but is null, rid: %s", rid)
+			return errors.RawErrorInfo{ErrCode: common.CCErrCommParamsInvalid, Args: []interface{}{key}}
+		}
+
+		if len(org) == 0 {
+			return errors.RawErrorInfo{}
+		}
+
+		if attribute.IsMultiple == nil {
+			return errors.RawErrorInfo{ErrCode: common.CCErrCommParamsNeedSet, Args: []interface{}{key}}
+		}
+
+		if !(*attribute.IsMultiple) && len(org) != 1 {
+			return errors.RawErrorInfo{ErrCode: common.CCErrCommParamsInvalid, Args: []interface{}{key}}
+		}
+
+		for _, orgID := range org {
+			if !util.IsInteger(orgID) {
+				blog.Errorf("orgID params not int, type: %T, rid: %s", orgID, rid)
+				return errors.RawErrorInfo{ErrCode: common.CCErrCommParamsIsInvalid, Args: []interface{}{key}}
+			}
 		}
 	case bson.A:
-		if rawErr := attribute.validOrganizationValue(org, key, rid); rawErr.ErrCode != 0 {
-			return rawErr
+		if len(org) == 0 && attribute.IsRequired {
+			return errors.RawErrorInfo{ErrCode: common.CCErrCommParamsInvalid, Args: []interface{}{key}}
+		}
+
+		if len(org) == 0 {
+			return errors.RawErrorInfo{}
+		}
+
+		if attribute.IsMultiple == nil {
+			return errors.RawErrorInfo{ErrCode: common.CCErrCommParamsInvalid, Args: []interface{}{key}}
+		}
+
+		if !(*attribute.IsMultiple) && len(org) != 1 {
+			return errors.RawErrorInfo{ErrCode: common.CCErrCommParamsInvalid, Args: []interface{}{key}}
+		}
+
+		for _, orgID := range org {
+			if !util.IsInteger(orgID) {
+				blog.Errorf("orgID params not int, type: %T, rid: %s", orgID, rid)
+				return errors.RawErrorInfo{ErrCode: common.CCErrCommParamsIsInvalid, Args: []interface{}{key}}
+			}
 		}
 	default:
 		blog.Errorf("params should be type organization,but its type is %T, rid: %s", val, rid)
 		return errors.RawErrorInfo{ErrCode: common.CCErrCommParamsInvalid, Args: []interface{}{key}}
 	}
 
-	return errors.RawErrorInfo{}
-}
-
-func (attribute *Attribute) validOrganizationValue(org []interface{}, key string, rid string) errors.RawErrorInfo {
-	if len(org) == 0 && attribute.IsRequired {
-		blog.Errorf("org is required, but is null, rid: %s", rid)
-		return errors.RawErrorInfo{ErrCode: common.CCErrCommParamsInvalid, Args: []interface{}{key}}
-	}
-
-	if len(org) == 0 {
-		return errors.RawErrorInfo{}
-	}
-
-	if attribute.IsMultiple == nil {
-		return errors.RawErrorInfo{ErrCode: common.CCErrCommParamsNeedSet, Args: []interface{}{key}}
-	}
-
-	if !(*attribute.IsMultiple) && len(org) != 1 {
-		return errors.RawErrorInfo{ErrCode: common.CCErrCommParamsInvalid, Args: []interface{}{key}}
-	}
-
-	for _, orgID := range org {
-		if !util.IsInteger(orgID) {
-			blog.Errorf("orgID params not int, type: %T, rid: %s", orgID, rid)
-			return errors.RawErrorInfo{ErrCode: common.CCErrCommParamsIsInvalid, Args: []interface{}{key}}
-		}
-	}
 	return errors.RawErrorInfo{}
 }
 
@@ -1073,154 +1102,92 @@ func (attribute *Attribute) validInnerTable(ctx context.Context, val interface{}
 	return errors.RawErrorInfo{}
 }
 
-// PrevIntOption previous integer option
-// Deprecated: do not use anymore, use IntOption instead.
-type PrevIntOption struct {
+// parseFloatOption  parse float data in option
+func parseFloatOption(ctx context.Context, val interface{}) FloatOption {
+	rid := util.ExtractRequestIDFromContext(ctx)
+	floatOption := FloatOption{}
+	if val == nil || val == "" {
+		return floatOption
+	}
+
+	switch option := val.(type) {
+	case string:
+		floatOption.Min = gjson.Get(option, "min").Raw
+		floatOption.Max = gjson.Get(option, "max").Raw
+	case map[string]interface{}:
+		floatOption.Min = getString(option["min"])
+		floatOption.Max = getString(option["max"])
+	case bson.M:
+		floatOption.Min = getString(option["min"])
+		floatOption.Max = getString(option["max"])
+	case bson.D:
+		opt := option.Map()
+		floatOption.Min = getString(opt["min"])
+		floatOption.Max = getString(opt["max"])
+	default:
+		blog.Warnf("unknow val type: %#v, rid: %s", val, rid)
+	}
+	return floatOption
+}
+
+// ParseIntOption  parse int data in option
+func ParseIntOption(ctx context.Context, val interface{}) IntOption {
+	rid := util.ExtractRequestIDFromContext(ctx)
+	intOption := IntOption{}
+	if nil == val || "" == val {
+		return intOption
+	}
+	switch option := val.(type) {
+	case string:
+		intOption.Min = gjson.Get(option, "min").Raw
+		intOption.Max = gjson.Get(option, "max").Raw
+	case map[string]interface{}:
+		intOption.Min = getString(option["min"])
+		intOption.Max = getString(option["max"])
+	case bson.M:
+		intOption.Min = getString(option["min"])
+		intOption.Max = getString(option["max"])
+	case bson.D:
+		opt := option.Map()
+		intOption.Min = getString(opt["min"])
+		intOption.Max = getString(opt["max"])
+	default:
+		blog.Warnf("unknow val type: %#v, rid: %s", val, rid)
+	}
+	return intOption
+}
+
+// EnumOption enum option
+type EnumOption []EnumVal
+
+// IntOption integer option
+type IntOption struct {
 	Min string `bson:"min" json:"min"`
 	Max string `bson:"max" json:"max"`
 }
 
-// IntOption integer option
-type IntOption struct {
-	Min int64 `bson:"min" json:"min"`
-	Max int64 `bson:"max" json:"max"`
-}
-
-// ParseIntOption parse int data in option
-func ParseIntOption(val interface{}) (IntOption, error) {
-	if val == nil || val == "" {
-		return IntOption{Max: common.MaxInt64, Min: common.MinInt64}, nil
-	}
-
-	var optMap map[string]interface{}
-
-	switch option := val.(type) {
-	case IntOption:
-		return option, nil
-	case string:
-		return parseIntOptionMaxMin(gjson.Get(option, "max").Raw, gjson.Get(option, "min").Raw)
-	case map[string]interface{}:
-		optMap = option
-	case bson.M:
-		optMap = option
-	case bson.D:
-		optMap = option.Map()
-	default:
-		return IntOption{}, fmt.Errorf("unknow val type: %T", val)
-	}
-
-	return parseIntOptionMaxMin(optMap["max"], optMap["min"])
-}
-
-func parseIntOptionMaxMin(maxVal, minVal interface{}) (IntOption, error) {
-	max, err := parseIntOptValue(maxVal, common.MaxInt64)
-	if err != nil {
-		return IntOption{}, fmt.Errorf("parse max int option %+v failed, err: %v", maxVal, err)
-	}
-
-	min, err := parseIntOptValue(minVal, common.MinInt64)
-	if err != nil {
-		return IntOption{}, fmt.Errorf("parse min int option %+v failed, err: %v", minVal, err)
-	}
-
-	return IntOption{Max: max, Min: min}, nil
-}
-
-func parseIntOptValue(value interface{}, defaultVal int64) (int64, error) {
-	switch val := value.(type) {
-	case string:
-		if len(val) == 0 || val == `""` {
-			return defaultVal, nil
-		}
-		intVal, err := strconv.ParseInt(val, 10, 64)
-		if err != nil {
-			return 0, err
-		}
-		return intVal, nil
-	default:
-		intVal, err := util.GetInt64ByInterface(val)
-		if err != nil {
-			return 0, err
-		}
-		return intVal, nil
-	}
-}
-
 // FloatOption float option
 type FloatOption struct {
-	Min float64 `bson:"min" json:"min"`
-	Max float64 `bson:"max" json:"max"`
-}
-
-// ParseFloatOption parse float data in option
-func ParseFloatOption(val interface{}) (FloatOption, error) {
-	if val == nil || val == "" {
-		return FloatOption{Max: float64(common.MaxInt64), Min: float64(common.MinInt64)}, nil
-	}
-
-	var optMap map[string]interface{}
-
-	switch option := val.(type) {
-	case FloatOption:
-		return option, nil
-	case string:
-		return parseFloatOptionMaxMin(gjson.Get(option, "max").Raw, gjson.Get(option, "min").Raw)
-	case map[string]interface{}:
-		optMap = option
-	case bson.M:
-		optMap = option
-	case bson.D:
-		optMap = option.Map()
-	default:
-		return FloatOption{}, fmt.Errorf("unknow val type: %T", val)
-	}
-
-	return parseFloatOptionMaxMin(optMap["max"], optMap["min"])
-}
-
-func parseFloatOptionMaxMin(maxVal, minVal interface{}) (FloatOption, error) {
-	max, err := parseFloatOptValue(maxVal, float64(common.MaxInt64))
-	if err != nil {
-		return FloatOption{}, fmt.Errorf("parse max float option %+v failed, err: %v", maxVal, err)
-	}
-
-	min, err := parseFloatOptValue(minVal, float64(common.MinInt64))
-	if err != nil {
-		return FloatOption{}, fmt.Errorf("parse min float option %+v failed, err: %v", minVal, err)
-	}
-
-	return FloatOption{Max: max, Min: min}, nil
-}
-
-func parseFloatOptValue(value interface{}, defaultVal float64) (float64, error) {
-	switch val := value.(type) {
-	case string:
-		if len(val) == 0 || val == `""` {
-			return defaultVal, nil
-		}
-		floatVal, err := strconv.ParseFloat(val, 64)
-		if err != nil {
-			return 0, err
-		}
-		return floatVal, nil
-	default:
-		floatVal, err := util.GetFloat64ByInterface(val)
-		if err != nil {
-			return 0, err
-		}
-		return floatVal, nil
-	}
+	Min string `bson:"min" json:"min"`
+	Max string `bson:"max" json:"max"`
 }
 
 func getString(val interface{}) string {
 	if val == nil {
 		return ""
 	}
-
-	if ret, ok := val.(string); ok {
+	switch ret := val.(type) {
+	case string:
 		return ret
+	default:
+		if util.IsNumeric(val) {
+			// compatible for int & float, need to merge with src/common/valid
+			js, _ := json.Marshal(ret)
+			return string(js)
+		}
+
+		return ""
 	}
-	return ""
 }
 
 func getBool(val interface{}) bool {
@@ -1233,8 +1200,15 @@ func getBool(val interface{}) bool {
 	return false
 }
 
-// EnumOption enum option
-type EnumOption []EnumVal
+// GetDefault returns EnumOption's default value
+func (opt EnumOption) GetDefault() *EnumVal {
+	for index := range opt {
+		if opt[index].IsDefault {
+			return &opt[index]
+		}
+	}
+	return nil
+}
 
 // EnumVal enum option val
 type EnumVal struct {
@@ -1245,72 +1219,76 @@ type EnumVal struct {
 }
 
 // ParseEnumOption convert val to []EnumVal
-func ParseEnumOption(val interface{}) (EnumOption, error) {
-	enumOptions := make([]EnumVal, 0)
-	if val == nil || val == "" {
+func ParseEnumOption(ctx context.Context, val interface{}) (EnumOption, error) {
+	rid := util.ExtractRequestIDFromContext(ctx)
+	enumOptions := []EnumVal{}
+	if nil == val || "" == val {
 		return enumOptions, nil
 	}
-
-	var optionArr []interface{}
-
 	switch options := val.(type) {
-	case EnumOption:
-		return options, nil
 	case []EnumVal:
 		return options, nil
 	case string:
 		err := json.Unmarshal([]byte(options), &enumOptions)
-		if err != nil {
+		if nil != err {
+			blog.Errorf("ParseEnumOption error : %s, rid: %s", err.Error(), rid)
 			return nil, err
 		}
 	case []interface{}:
-		optionArr = options
-	case bson.A:
-		optionArr = options
-	default:
-		return nil, fmt.Errorf("unknow val type: %T for enum option", val)
-	}
-
-	for _, optionElem := range optionArr {
-		enumVal, err := parseEnumVal(optionElem)
-		if err != nil {
+		if err := parseEnumOption(options, &enumOptions); err != nil {
+			blog.Errorf("parseEnumOption error : %s, rid: %s", err.Error(), rid)
 			return nil, err
 		}
-		enumOptions = append(enumOptions, enumVal)
+	case bson.A:
+		if err := parseEnumOption(options, &enumOptions); err != nil {
+			blog.Errorf("parseEnumOption error : %s, rid: %s", err.Error(), rid)
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("unknow val type: %#v", val)
 	}
-
 	return enumOptions, nil
 }
 
-// parseEnumVal parse enum options element value
-func parseEnumVal(val interface{}) (EnumVal, error) {
-	var valMap mapstr.MapStr
-
-	switch optionVal := val.(type) {
-	case map[string]interface{}:
-		valMap = optionVal
-	case bson.M:
-		valMap = mapstr.MapStr(optionVal)
-	case bson.D:
-		valMap = mapstr.MapStr(optionVal.Map())
-	default:
-		return EnumVal{}, fmt.Errorf("unknow element type: %T for enum option", val)
+// parseEnumOption set enumOptions values from options
+func parseEnumOption(options []interface{}, enumOptions *[]EnumVal) error {
+	for _, optionVal := range options {
+		if option, ok := optionVal.(map[string]interface{}); ok {
+			enumOption := EnumVal{}
+			enumOption.ID = getString(option["id"])
+			enumOption.Name = getString(option["name"])
+			enumOption.Type = getString(option["type"])
+			enumOption.IsDefault = getBool(option["is_default"])
+			if enumOption.ID == "" || enumOption.Name == "" || enumOption.Type != "text" {
+				return fmt.Errorf("operation %#v id, name empty or not string, or type not text", option)
+			}
+			*enumOptions = append(*enumOptions, enumOption)
+		} else if option, ok := optionVal.(bson.M); ok {
+			enumOption := EnumVal{}
+			enumOption.ID = getString(option["id"])
+			enumOption.Name = getString(option["name"])
+			enumOption.Type = getString(option["type"])
+			enumOption.IsDefault = getBool(option["is_default"])
+			if enumOption.ID == "" || enumOption.Name == "" || enumOption.Type != "text" {
+				return fmt.Errorf("operation %#v id, name empty or not string, or type not text", option)
+			}
+			*enumOptions = append(*enumOptions, enumOption)
+		} else if option, ok := optionVal.(bson.D); ok {
+			opt := option.Map()
+			enumOption := EnumVal{}
+			enumOption.ID = getString(opt["id"])
+			enumOption.Name = getString(opt["name"])
+			enumOption.Type = getString(opt["type"])
+			enumOption.IsDefault = getBool(opt["is_default"])
+			if enumOption.ID == "" || enumOption.Name == "" || enumOption.Type != "text" {
+				return fmt.Errorf("operation %#v id, name empty or not string, or type not text", option)
+			}
+			*enumOptions = append(*enumOptions, enumOption)
+		} else {
+			return fmt.Errorf("unknow optionVal type: %#v", optionVal)
+		}
 	}
-
-	if valMap == nil {
-		return EnumVal{}, fmt.Errorf("enum option val map is nil")
-	}
-
-	enumOption := EnumVal{}
-	enumOption.ID = getString(valMap["id"])
-	enumOption.Name = getString(valMap["name"])
-	enumOption.Type = getString(valMap["type"])
-	enumOption.IsDefault = getBool(valMap["is_default"])
-	if enumOption.ID == "" || enumOption.Name == "" || enumOption.Type != "text" {
-		return EnumVal{}, fmt.Errorf("enum option val %#v id, name empty or not string, or type not text", val)
-	}
-
-	return enumOption, nil
+	return nil
 }
 
 // EnumQuoteVal enum quote option val
@@ -1394,44 +1372,6 @@ func parseEnumQuoteOption(options []interface{}, enumQuoteOptions *[]EnumQuoteVa
 	return nil
 }
 
-// ListOption list option
-type ListOption []string
-
-// ParseListOption parse 'list' type option
-func ParseListOption(option interface{}) (ListOption, error) {
-	if option == nil {
-		return ListOption{}, fmt.Errorf("list type field option is null")
-	}
-
-	var arrOption []interface{}
-	switch optionVal := option.(type) {
-	case []interface{}:
-		arrOption = optionVal
-	case primitive.A:
-		arrOption = optionVal
-	case ListOption:
-		return optionVal, nil
-	default:
-		return nil, fmt.Errorf("list option %+v type %T is invalid", option, option)
-	}
-
-	if len(arrOption) == 0 {
-		return ListOption{}, fmt.Errorf("list type field option is empty")
-	}
-
-	valueList := make(ListOption, len(arrOption))
-	for _, val := range arrOption {
-		strVal, ok := val.(string)
-		if !ok {
-			return nil, fmt.Errorf("list option element %+v type %T is invalid", val, val)
-		}
-
-		valueList = append(valueList, strVal)
-	}
-
-	return valueList, nil
-}
-
 // PrettyValue TODO
 func (attribute Attribute) PrettyValue(ctx context.Context, val interface{}) (string, error) {
 	if val == nil {
@@ -1466,7 +1406,7 @@ func (attribute Attribute) PrettyValue(ctx context.Context, val interface{}) (st
 			return "", fmt.Errorf("invalid value type for %s, value: %+v", fieldType, val)
 		}
 		// validate within enum
-		enumOption, err := ParseEnumOption(attribute.Option)
+		enumOption, err := ParseEnumOption(ctx, attribute.Option)
 		if err != nil {
 			return "", fmt.Errorf("parse options for enum type failed, err: %+v", err)
 		}

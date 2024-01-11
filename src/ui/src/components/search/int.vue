@@ -12,22 +12,18 @@
 
 <template>
   <span class="search-input-wrapper" v-if="multiple">
-    <bk-input :min="min" :max="max"
-      class="search-input" type="number" v-model="start" v-on="listeners"></bk-input>
+    <bk-input class="search-input" type="number" v-model="start" v-on="listeners"></bk-input>
     <span class="search-input-grep">-</span>
-    <bk-input :min="min" :max="max"
-      class="search-input" type="number" v-model="end" v-on="listeners"></bk-input>
+    <bk-input class="search-input" type="number" v-model="end" v-on="listeners"></bk-input>
   </span>
-  <bk-input class="search-input" type="number"
-    :min="min" :max="max" v-model="localValue" v-on="listeners" v-else></bk-input>
+  <bk-input class="search-input" type="number" v-model="localValue" v-on="listeners" v-else></bk-input>
 </template>
 
 <script>
   import activeMixin from './mixins/active'
-  import numberFormTypeMixin from '@/mixins/number-form-type'
   export default {
     name: 'cmdb-search-int',
-    mixins: [activeMixin, numberFormTypeMixin],
+    mixins: [activeMixin],
     props: {
       value: {
         type: [Number, String, Array],
@@ -49,7 +45,7 @@
       },
       localValue: {
         get() {
-          return String(this.value) === 'NaN' ? '' : this.value
+          return this.value
         },
         set(value) {
           let newValue

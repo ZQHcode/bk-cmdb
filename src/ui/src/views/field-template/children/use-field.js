@@ -197,11 +197,10 @@ export const normalizeUniqueData = (uniqueData, fieldData, isCreate = true, uniq
   return uniqueList
 }
 
-export const isFieldSame = (field1, field2, id) => (field1.bk_property_id === field2.bk_property_id
-  || field1.bk_property_name === field2.bk_property_name)
-  && (!id || field1.id !== id)
+export const isFieldSame = (field1, field2) => field1.bk_property_id === field2.bk_property_id
+  || field1.bk_property_name === field2.bk_property_name
 
-export const isFieldExist = (field, fieldList, id) => fieldList.some(item => isFieldSame(item.field, field, id))
+export const isFieldExist = (field, fieldList) => fieldList.some(item => isFieldSame(item.field, field))
 
 export const MAX_FIELD_COUNT = 20
 

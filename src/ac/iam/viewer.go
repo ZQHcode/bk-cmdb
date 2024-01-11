@@ -22,7 +22,6 @@ import (
 	commonlgc "configcenter/src/common/logics"
 	"configcenter/src/common/metadata"
 	"configcenter/src/common/util"
-	"configcenter/src/storage/dal/redis"
 )
 
 type viewer struct {
@@ -39,18 +38,10 @@ func NewViewer(client apimachinery.ClientSetInterface, iam *IAM) *viewer {
 }
 
 // CreateView create iam view for objects
-func (v *viewer) CreateView(ctx context.Context, header http.Header, objects []metadata.Object, redisCli redis.Client,
-	rid string) error {
-
+func (v *viewer) CreateView(ctx context.Context, header http.Header, objects []metadata.Object) error {
 	if !auth.EnableAuthorize() {
 		return nil
 	}
-
-	locker, err := tryLockRegister(redisCli, rid)
-	if err != nil {
-		return err
-	}
-	defer locker.Unlock()
 
 	// register order: 1.ResourceType 2.InstanceSelection 3.Action 4.ActionGroup
 	if err := v.registerModelResourceTypes(ctx, objects); err != nil {
@@ -73,18 +64,10 @@ func (v *viewer) CreateView(ctx context.Context, header http.Header, objects []m
 }
 
 // DeleteView delete iam view for objects
-func (v *viewer) DeleteView(ctx context.Context, header http.Header, objects []metadata.Object, redisCli redis.Client,
-	rid string) error {
-
+func (v *viewer) DeleteView(ctx context.Context, header http.Header, objects []metadata.Object) error {
 	if !auth.EnableAuthorize() {
 		return nil
 	}
-
-	locker, err := tryLockRegister(redisCli, rid)
-	if err != nil {
-		return err
-	}
-	defer locker.Unlock()
 
 	// unregister order: 1.Action 2.InstanceSelection 3.ResourceType 4.ActionGroup
 	if err := v.unregisterModelActions(ctx, objects); err != nil {
@@ -107,18 +90,10 @@ func (v *viewer) DeleteView(ctx context.Context, header http.Header, objects []m
 }
 
 // UpdateView update iam view for objects
-func (v *viewer) UpdateView(ctx context.Context, header http.Header, objects []metadata.Object, redisCli redis.Client,
-	rid string) error {
-
+func (v *viewer) UpdateView(ctx context.Context, header http.Header, objects []metadata.Object) error {
 	if !auth.EnableAuthorize() {
 		return nil
 	}
-
-	locker, err := tryLockRegister(redisCli, rid)
-	if err != nil {
-		return err
-	}
-	defer locker.Unlock()
 
 	// update order: 1.ResourceType 2.InstanceSelection 3.Action 4.ActionGroup
 	if err := v.updateModelResourceTypes(ctx, objects); err != nil {

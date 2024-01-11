@@ -38,7 +38,7 @@
         </bk-input>
       </bk-form-item>
       <bk-form-item class="form-action-item">
-        <SaveButton @save="save" :loading="globalConfig.updating" :disabled="!isExistedBiz"></SaveButton>
+        <SaveButton @save="save" :loading="globalConfig.updating"></SaveButton>
         <bk-popconfirm
           trigger="click"
           :title="$t('确认重置业务通用选项？')"
@@ -73,7 +73,6 @@
       }
       const bizGeneralForm = reactive(cloneDeep(defaultForm))
       const bizGeneralFormRef = ref(null)
-      const isExistedBiz = ref(true)
       const labelWidth = computed(() => (language === 'zh_CN' ? 150 : 230))
       const bizNameIconOffsetLeft =  computed(() => (language === 'zh_CN' ? 30 : 10))
       const topoLevelIconOffsetLeft =  computed(() => (language === 'zh_CN' ? 0 : -20))
@@ -104,8 +103,8 @@
               if (err) {
                 return false
               }
-              isExistedBiz.value = businesses?.some(biz => bizName === biz.bk_biz_name)
-              return isExistedBiz.value
+              const isExistedBiz = businesses?.some(biz => bizName === biz.bk_biz_name)
+              return isExistedBiz
             }
           }
         ],
@@ -141,7 +140,6 @@
       }
 
       return {
-        isExistedBiz,
         bizGeneralForm,
         bizGeneralFormRef,
         bizGeneralFormRules,

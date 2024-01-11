@@ -134,7 +134,6 @@
 <script>
   import theRelation from './_detail'
   import { mapActions } from 'vuex'
-  import { escapeRegexChar } from '@/utils/util'
   export default {
     components: {
       theRelation
@@ -200,7 +199,7 @@
       ]),
       searchRelation(fromClick) {
         if (fromClick) {
-          this.sendSearchText = escapeRegexChar(this.searchText)
+          this.sendSearchText = this.searchText
           this.table.pagination.current = 1
           this.table.stuff.type = 'search'
         }

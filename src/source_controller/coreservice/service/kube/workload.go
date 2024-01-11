@@ -18,8 +18,8 @@
 package kube
 
 import (
-	"encoding/json"
 	"errors"
+	"strconv"
 	"time"
 
 	"configcenter/src/common"
@@ -35,6 +35,13 @@ import (
 
 // CreateWorkload create workload
 func (s *service) CreateWorkload(ctx *rest.Contexts) {
+	bizIDStr := ctx.Request.PathParameter(common.BKAppIDField)
+	bizID, err := strconv.ParseInt(bizIDStr, 10, 64)
+	if err != nil {
+		ctx.RespAutoError(ctx.Kit.CCError.CCErrorf(common.CCErrCommParamsInvalid, common.BKAppIDField))
+		return
+	}
+
 	kind := types.WorkloadType(ctx.Request.PathParameter(types.KindField))
 	tableName, err := kind.Table()
 	if err != nil {
@@ -42,27 +49,18 @@ func (s *service) CreateWorkload(ctx *rest.Contexts) {
 		return
 	}
 
-	rawReq := json.RawMessage{}
-	if err = ctx.DecodeInto(&rawReq); err != nil {
+	req := types.WlCreateOption{Kind: kind}
+	if err := ctx.DecodeInto(&req); err != nil {
 		ctx.RespAutoError(err)
 		return
 	}
 
-	workloads, err := types.WlArrayUnmarshalJSON(kind, rawReq)
-	if err != nil {
-		ctx.RespAutoError(err)
+	if rawErr := req.Validate(); rawErr.ErrCode != 0 {
+		ctx.RespAutoError(rawErr.ToCCError(ctx.Kit.CCError))
 		return
 	}
 
-	for _, workload := range workloads {
-		if rawErr := workload.ValidateCreate(); rawErr.ErrCode != 0 {
-			blog.Errorf("workload %+v is invalid, err: %v, rid: %s", workload, rawErr, ctx.Kit.Rid)
-			ctx.RespAutoError(rawErr.ToCCError(ctx.Kit.CCError))
-			return
-		}
-	}
-
-	ids, err := mongodb.Client().NextSequences(ctx.Kit.Ctx, tableName, len(workloads))
+	ids, err := mongodb.Client().NextSequences(ctx.Kit.Ctx, tableName, len(req.Data))
 	if err != nil {
 		blog.Errorf("get workload ids failed, table: %s, err: %v, rid: %s", tableName, err, ctx.Kit.Rid)
 		ctx.RespAutoError(ctx.Kit.CCError.CCError(common.CCErrCommDBSelectFailed))
@@ -70,27 +68,22 @@ func (s *service) CreateWorkload(ctx *rest.Contexts) {
 	}
 
 	nsIDs := make([]int64, 0)
-	for _, data := range workloads {
+	for _, data := range req.Data {
 		nsIDs = append(nsIDs, data.GetWorkloadBase().NamespaceID)
 	}
-	nsSpecs, err := s.GetNamespaceSpec(ctx.Kit, nsIDs)
+	nsSpecs, err := s.GetNamespaceSpec(ctx.Kit, bizID, nsIDs)
 	if err != nil {
-		blog.Errorf("get namespace spec message failed, namespaceIDs: %v, err: %v, rid: %s", nsIDs, err, ctx.Kit.Rid)
+		blog.Errorf("get namespace spec message failed, bizID: %s, namespaceIDs: %v, err: %v, rid: %s", bizID, nsIDs,
+			err, ctx.Kit.Rid)
 		ctx.RespAutoError(err)
 		return
 	}
 
-	respData := metadata.RspIDs{IDs: make([]int64, len(ids))}
-	createData := make([]types.WorkloadInterface, len(workloads))
-	mismatchNsMap := make(map[int64][]int64)
-
-	for idx, data := range workloads {
+	respData := metadata.RspIDs{
+		IDs: make([]int64, len(ids)),
+	}
+	for idx, data := range req.Data {
 		wlBase := data.GetWorkloadBase()
-
-		if wlBase.BizID != nsSpecs[wlBase.NamespaceID].BizID {
-			mismatchNsMap[wlBase.BizID] = append(mismatchNsMap[wlBase.BizID], wlBase.NamespaceID)
-		}
-
 		wlBase.NamespaceSpec = nsSpecs[wlBase.NamespaceID]
 		id := int64(ids[idx])
 		wlBase.ID = id
@@ -105,29 +98,25 @@ func (s *service) CreateWorkload(ctx *rest.Contexts) {
 		wlBase.Revision = revision
 		wlBase.SupplierAccount = ctx.Kit.SupplierAccount
 		data.SetWorkloadBase(wlBase)
-		createData[idx] = data
-	}
-
-	// checks if workload's namespace is a shared namespace and if its biz id is not the same with the input biz id
-	if err = s.core.KubeOperation().CheckPlatBizSharedNs(ctx.Kit, mismatchNsMap); err != nil {
-		ctx.RespAutoError(err)
-		return
-	}
-
-	// create workloads
-	err = mongodb.Client().Table(tableName).Insert(ctx.Kit.Ctx, createData)
-	if err != nil {
-		blog.Errorf("add %s workload failed,data: %v, err: %v, rid: %s", tableName, createData, err, ctx.Kit.Rid)
-		ctx.RespAutoError(ctx.Kit.CCError.CCError(common.CCErrCommDBInsertFailed))
-		return
+		err = mongodb.Client().Table(tableName).Insert(ctx.Kit.Ctx, data)
+		if err != nil {
+			blog.Errorf("add workload failed, table: %s, data: %v, err: %v, rid: %s", tableName, data, err, ctx.Kit.Rid)
+			ctx.RespAutoError(ctx.Kit.CCError.CCError(common.CCErrCommDBInsertFailed))
+			return
+		}
 	}
 
 	ctx.RespEntity(respData)
 }
 
-// GetNamespaceSpec get namespace spec
-func (s *service) GetNamespaceSpec(kit *rest.Kit, nsIDs []int64) (map[int64]types.NamespaceSpec,
+// GetNamespaceInfo get namespace spec
+func (s *service) GetNamespaceSpec(kit *rest.Kit, bizID int64, nsIDs []int64) (map[int64]types.NamespaceSpec,
 	error) {
+
+	if bizID == 0 {
+		blog.Errorf("bizID can not be empty, rid: %s", kit.Rid)
+		return nil, errors.New("bizID can not be empty")
+	}
 
 	if len(nsIDs) == 0 {
 		blog.Errorf("namespaceIDs can not be empty, rid: %s", kit.Rid)
@@ -136,12 +125,12 @@ func (s *service) GetNamespaceSpec(kit *rest.Kit, nsIDs []int64) (map[int64]type
 
 	nsIDs = util.IntArrayUnique(nsIDs)
 	filter := map[string]interface{}{
-		common.BKFieldID: mapstr.MapStr{common.BKDBIN: nsIDs},
+		common.BKAppIDField: bizID,
+		common.BKFieldID:    mapstr.MapStr{common.BKDBIN: nsIDs},
 	}
 	filter = util.SetQueryOwner(filter, kit.SupplierAccount)
 
-	field := []string{common.BKFieldID, common.BKFieldName, common.BKAppIDField, types.BKClusterIDFiled,
-		types.ClusterUIDField}
+	field := []string{common.BKFieldID, common.BKFieldName, types.BKClusterIDFiled, types.ClusterUIDField}
 	namespaces := make([]types.Namespace, 0)
 	err := mongodb.Client().Table(types.BKTableNameBaseNamespace).Find(filter).Fields(field...).
 		All(kit.Ctx, &namespaces)
@@ -159,7 +148,7 @@ func (s *service) GetNamespaceSpec(kit *rest.Kit, nsIDs []int64) (map[int64]type
 	for _, namespace := range namespaces {
 		nsSpecs[namespace.ID] = types.NamespaceSpec{
 			ClusterSpec: types.ClusterSpec{
-				BizID:      namespace.BizID,
+				BizID:      bizID,
 				ClusterID:  namespace.ClusterID,
 				ClusterUID: namespace.ClusterUID,
 			},
@@ -172,6 +161,13 @@ func (s *service) GetNamespaceSpec(kit *rest.Kit, nsIDs []int64) (map[int64]type
 
 // UpdateWorkload update workload
 func (s *service) UpdateWorkload(ctx *rest.Contexts) {
+	bizIDStr := ctx.Request.PathParameter(common.BKAppIDField)
+	bizID, err := strconv.ParseInt(bizIDStr, 10, 64)
+	if err != nil {
+		ctx.RespAutoError(ctx.Kit.CCError.CCErrorf(common.CCErrCommParamsInvalid, common.BKAppIDField))
+		return
+	}
+
 	kind := types.WorkloadType(ctx.Request.PathParameter(types.KindField))
 	table, err := kind.Table()
 	if err != nil {
@@ -179,7 +175,7 @@ func (s *service) UpdateWorkload(ctx *rest.Contexts) {
 		return
 	}
 
-	req := types.WlUpdateByIDsOption{Kind: kind}
+	req := types.WlUpdateOption{Kind: kind}
 	if err := ctx.DecodeInto(&req); err != nil {
 		ctx.RespAutoError(err)
 		return
@@ -191,7 +187,8 @@ func (s *service) UpdateWorkload(ctx *rest.Contexts) {
 	}
 
 	cond := map[string]interface{}{
-		common.BKFieldID: mapstr.MapStr{common.BKDBIN: req.IDs},
+		common.BKFieldID:    mapstr.MapStr{common.BKDBIN: req.IDs},
+		common.BKAppIDField: bizID,
 	}
 	util.SetModOwner(cond, ctx.Kit.SupplierAccount)
 	updateData, err := req.Data.BuildUpdateData(ctx.Kit.User)
@@ -214,6 +211,13 @@ func (s *service) UpdateWorkload(ctx *rest.Contexts) {
 
 // DeleteWorkload delete workload
 func (s *service) DeleteWorkload(ctx *rest.Contexts) {
+	bizIDStr := ctx.Request.PathParameter(common.BKAppIDField)
+	bizID, err := strconv.ParseInt(bizIDStr, 10, 64)
+	if err != nil {
+		ctx.RespAutoError(ctx.Kit.CCError.CCErrorf(common.CCErrCommParamsInvalid, common.BKAppIDField))
+		return
+	}
+
 	kind := types.WorkloadType(ctx.Request.PathParameter(types.KindField))
 	table, err := kind.Table()
 	if err != nil {
@@ -221,7 +225,7 @@ func (s *service) DeleteWorkload(ctx *rest.Contexts) {
 		return
 	}
 
-	req := new(types.WlDeleteByIDsOption)
+	req := new(types.WlDeleteOption)
 	if err := ctx.DecodeInto(req); nil != err {
 		ctx.RespAutoError(err)
 		return
@@ -233,7 +237,8 @@ func (s *service) DeleteWorkload(ctx *rest.Contexts) {
 	}
 
 	filter := mapstr.MapStr{
-		common.BKFieldID: mapstr.MapStr{common.BKDBIN: req.IDs},
+		common.BKFieldID:    mapstr.MapStr{common.BKDBIN: req.IDs},
+		common.BKAppIDField: bizID,
 	}
 	util.SetModOwner(filter, ctx.Kit.SupplierAccount)
 	if err := mongodb.Client().Table(table).Delete(ctx.Kit.Ctx, filter); err != nil {

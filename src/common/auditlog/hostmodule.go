@@ -86,29 +86,96 @@ func (h *hostModuleLog) SaveAudit(kit *rest.Kit) errors.CCError {
 	}
 
 	var setIDs, moduleIDs, appIDs []int64
-	for _, val := range append(h.pre, h.cur...) {
+	for _, val := range h.pre {
+		setIDs = append(setIDs, val.SetID)
+		moduleIDs = append(moduleIDs, val.ModuleID)
+		appIDs = append(appIDs, val.AppID)
+	}
+	for _, val := range h.cur {
 		setIDs = append(setIDs, val.SetID)
 		moduleIDs = append(moduleIDs, val.ModuleID)
 		appIDs = append(appIDs, val.AppID)
 	}
 
-	moduleMap, err := h.getInstIDNameMap(kit, common.BKInnerObjIDModule, moduleIDs)
+	modules, err := h.getModules(kit, moduleIDs)
 	if err != nil {
 		return err
 	}
 
-	setMap, err := h.getInstIDNameMap(kit, common.BKInnerObjIDSet, setIDs)
+	moduleNameMap := make(map[int64]string)
+	for _, module := range modules {
+		moduleID, err := util.GetInt64ByInterface(module[common.BKModuleIDField])
+		if err != nil {
+			return err
+		}
+		moduleName, err := module.String(common.BKModuleNameField)
+		if err != nil {
+			return err
+		}
+		moduleNameMap[moduleID] = moduleName
+	}
+
+	sets, err := h.getSets(kit, setIDs)
 	if err != nil {
 		return err
 	}
 
-	bizMap, err := h.getInstIDNameMap(kit, common.BKInnerObjIDApp, appIDs)
+	setNameMap := make(map[int64]string)
+	for _, setInfo := range sets {
+		setID, err := util.GetInt64ByInterface(setInfo[common.BKSetIDField])
+		if err != nil {
+			return err
+		}
+		setNameMap[setID], err = setInfo.String(common.BKSetNameField)
+		if err != nil {
+			return err
+		}
+	}
+
+	preHostRelationMap := make(map[int64]map[int64][]metadata.Module)
+	preHostAppMap := make(map[int64]int64)
+	for _, val := range h.pre {
+		if _, ok := preHostRelationMap[val.HostID]; false == ok {
+			preHostRelationMap[val.HostID] = make(map[int64][]metadata.Module)
+		}
+		preHostAppMap[val.HostID] = val.AppID
+		preHostRelationMap[val.HostID][val.SetID] = append(preHostRelationMap[val.HostID][val.SetID],
+			metadata.Module{ModuleID: val.ModuleID, ModuleName: moduleNameMap[val.ModuleID]})
+	}
+
+	curHostRelationMap := make(map[int64]map[int64][]metadata.Module)
+	curHostAppMap := make(map[int64]int64)
+	for _, val := range h.cur {
+		if _, ok := curHostRelationMap[val.HostID]; false == ok {
+			curHostRelationMap[val.HostID] = make(map[int64][]metadata.Module)
+		}
+		curHostAppMap[val.HostID] = val.AppID
+		curHostRelationMap[val.HostID][val.SetID] = append(curHostRelationMap[val.HostID][val.SetID],
+			metadata.Module{ModuleID: val.ModuleID, ModuleName: moduleNameMap[val.ModuleID]})
+	}
+
+	appInfoArr, err := h.getApps(kit, appIDs)
 	if err != nil {
 		return err
 	}
 
-	preDataMap := h.getHostTransferDataMap(h.pre, bizMap, setMap, moduleMap)
-	curDataMap := h.getHostTransferDataMap(h.cur, bizMap, setMap, moduleMap)
+	appIDNameMap := make(map[int64]string, 0)
+	for _, appInfo := range appInfoArr {
+		bizID, err := appInfo.Int64(common.BKAppIDField)
+		if err != nil {
+			blog.ErrorJSON("appInfo get biz id err:%s, appInfo: %s, rid:%s", err.Error(), appInfo, kit.Rid)
+			return kit.CCError.Errorf(common.CCErrCommInstFieldConvertFail, common.BKInnerObjIDApp, common.BKAppIDField,
+				"int", err.Error())
+		}
+		name, err := appInfo.String(common.BKAppNameField)
+		if err != nil {
+			blog.ErrorJSON("appInfo get biz name err:%s, appInfo: %s, rid:%s", err.Error(), appInfo, kit.Rid)
+			return kit.CCError.Errorf(common.CCErrCommInstFieldConvertFail, common.BKInnerObjIDApp, common.BKAppIDField,
+				"int", err.Error())
+		}
+
+		appIDNameMap[bizID] = name
+	}
 
 	var logs = make([]metadata.AuditLog, 0)
 	for _, host := range hostInfos {
@@ -127,8 +194,36 @@ func (h *hostModuleLog) SaveAudit(kit *rest.Kit) errors.CCError {
 			return err
 		}
 
-		preData, curData := preDataMap[hostID], curDataMap[hostID]
-		preBizID, curBizID := preData.BizID, curData.BizID
+		sets := make([]metadata.Topo, 0)
+		for setID, modules := range preHostRelationMap[hostID] {
+			sets = append(sets, metadata.Topo{
+				SetID:   setID,
+				SetName: setNameMap[setID],
+				Module:  modules,
+			})
+		}
+
+		preBizID := preHostAppMap[hostID]
+		preData := metadata.HostBizTopo{
+			BizID:   preBizID,
+			BizName: appIDNameMap[preBizID],
+			Set:     sets,
+		}
+
+		sets = make([]metadata.Topo, 0)
+		for setID, modules := range curHostRelationMap[hostID] {
+			sets = append(sets, metadata.Topo{
+				SetID:   setID,
+				SetName: setNameMap[setID],
+				Module:  modules,
+			})
+		}
+		curBizID := curHostAppMap[hostID]
+		curData := metadata.HostBizTopo{
+			BizID:   curBizID,
+			BizName: appIDNameMap[curBizID],
+			Set:     sets,
+		}
 
 		var action metadata.ActionType
 		var bizID int64
@@ -202,74 +297,74 @@ func (h *hostModuleLog) getInnerIPAndInnerIPv6(kit *rest.Kit) ([]mapstr.MapStr, 
 	return result.Info, nil
 }
 
-func (h *hostModuleLog) getInstIDNameMap(kit *rest.Kit, objID string, ids []int64) (map[int64]string, error) {
-	if ids == nil {
-		return make(map[int64]string), nil
+func (h *hostModuleLog) getModules(kit *rest.Kit, moduleIds []int64) ([]mapstr.MapStr, errors.CCError) {
+	if moduleIds == nil {
+		return make([]mapstr.MapStr, 0), nil
 	}
-
-	idField := metadata.GetInstIDFieldByObjID(objID)
-	nameField := metadata.GetInstNameFieldName(objID)
-
 	query := &metadata.QueryCondition{
 		Page:      metadata.BasePage{Start: 0, Limit: common.BKNoLimit},
-		Condition: mapstr.MapStr{idField: common.KvMap{common.BKDBIN: ids}},
-		Fields:    []string{idField, nameField},
+		Condition: mapstr.MapStr{common.BKModuleIDField: common.KvMap{common.BKDBIN: moduleIds}},
+		Fields: []string{common.BKModuleIDField, common.BKSetIDField, common.BKModuleNameField, common.BKAppIDField,
+			common.BKOwnerIDField},
 	}
-
-	result, err := h.audit.clientSet.Instance().ReadInstance(kit.Ctx, kit.Header, objID, query)
+	result, err := h.audit.clientSet.Instance().ReadInstance(kit.Ctx, kit.Header, common.BKInnerObjIDModule, query)
 	if err != nil {
-		blog.Errorf("get %s id to name map failed, err: %v, input: %+v, rid: %s", objID, err, query, kit.Rid)
-		return nil, err
+		blog.Errorf("get modules failed, http do error, err: %v, input: %+v, rid: %s", err, query, kit.Rid)
+		return nil, kit.CCError.Error(common.CCErrCommHTTPDoRequestFailed)
 	}
 
-	idNameMap := make(map[int64]string)
-	for _, info := range result.Info {
-		id, err := util.GetInt64ByInterface(info[idField])
-		if err != nil {
-			blog.Errorf("parse %s id %+v to int failed, err: %v, rid: %s", objID, info[idField], err, kit.Rid)
-			return nil, err
-		}
-
-		idNameMap[id] = util.GetStrByInterface(info[nameField])
-	}
-
-	return idNameMap, nil
+	return result.Info, nil
 }
 
-func (h *hostModuleLog) getHostTransferDataMap(relations []metadata.ModuleHost, bizMap, setMap,
-	moduleMap map[int64]string) map[int64]metadata.HostBizTopo {
-
-	hostRelationMap := make(map[int64]map[int64][]metadata.Module)
-	hostAppMap := make(map[int64]int64)
-
-	for _, val := range relations {
-		if _, ok := hostRelationMap[val.HostID]; !ok {
-			hostRelationMap[val.HostID] = make(map[int64][]metadata.Module)
-		}
-
-		hostAppMap[val.HostID] = val.AppID
-		hostRelationMap[val.HostID][val.SetID] = append(hostRelationMap[val.HostID][val.SetID],
-			metadata.Module{ModuleID: val.ModuleID, ModuleName: moduleMap[val.ModuleID]})
+func (h *hostModuleLog) getSets(kit *rest.Kit, setIDs []int64) ([]mapstr.MapStr, errors.CCError) {
+	if setIDs == nil {
+		return make([]mapstr.MapStr, 0), nil
+	}
+	query := &metadata.QueryCondition{
+		Page:      metadata.BasePage{Start: 0, Limit: common.BKNoLimit},
+		Condition: mapstr.MapStr{common.BKSetIDField: mapstr.MapStr{common.BKDBIN: setIDs}},
+		Fields:    []string{common.BKSetNameField, common.BKSetIDField, common.BKOwnerIDField},
+	}
+	result, err := h.audit.clientSet.Instance().ReadInstance(kit.Ctx, kit.Header, common.BKInnerObjIDSet, query)
+	if err != nil {
+		blog.Errorf("get sets failed, err: %v, input: %+v, rid: %s", err, query, kit.Rid)
+		return nil, kit.CCError.Error(common.CCErrCommHTTPDoRequestFailed)
 	}
 
-	hostDataMap := make(map[int64]metadata.HostBizTopo)
-	for hostID, relationMap := range hostRelationMap {
-		sets := make([]metadata.Topo, 0)
-		for setID, modules := range relationMap {
-			sets = append(sets, metadata.Topo{
-				SetID:   setID,
-				SetName: setMap[setID],
-				Module:  modules,
-			})
-		}
+	return result.Info, nil
+}
 
-		bizID := hostAppMap[hostID]
-		hostDataMap[hostID] = metadata.HostBizTopo{
-			BizID:   bizID,
-			BizName: bizMap[bizID],
-			Set:     sets,
-		}
+func (h *hostModuleLog) getApps(kit *rest.Kit, appIDs []int64) ([]mapstr.MapStr, errors.CCError) {
+	if appIDs == nil {
+		return make([]mapstr.MapStr, 0), nil
+	}
+	query := &metadata.QueryCondition{
+		Page:      metadata.BasePage{Start: 0, Limit: common.BKNoLimit},
+		Condition: mapstr.MapStr{common.BKAppIDField: mapstr.MapStr{common.BKDBIN: appIDs}},
+		Fields:    []string{common.BKAppIDField, common.BKAppNameField, common.BKOwnerIDField},
+	}
+	result, err := h.audit.clientSet.Instance().ReadInstance(kit.Ctx, kit.Header, common.BKInnerObjIDApp, query)
+	if err != nil {
+		blog.Errorf("get business failed, http do error, err: %v, input: %+v, rid: %s", err, query, kit.Rid)
+		return nil, kit.CCError.Error(common.CCErrCommHTTPDoRequestFailed)
 	}
 
-	return hostDataMap
+	return result.Info, nil
+}
+
+// generateAuditLog generate audit log of host module relate.
+func (h *hostModuleLog) generateAuditLog(action metadata.ActionType, hostID, bizID int64, hostIP string,
+	preData, curData metadata.HostBizTopo) *metadata.AuditLog {
+	return &metadata.AuditLog{
+		AuditType:    metadata.HostType,
+		ResourceType: metadata.HostRes,
+		Action:       action,
+		BusinessID:   bizID,
+		ResourceID:   hostID,
+		ResourceName: hostIP,
+		OperationDetail: &metadata.HostTransferOpDetail{
+			PreData: preData,
+			CurData: curData,
+		},
+	}
 }

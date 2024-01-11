@@ -268,7 +268,6 @@
         // 选中指定的节点
         const queryNodeId = RouterQuery.get('node', '')
         if (queryNodeId) {
-          // 未加载的容器节点会找不到，导致无法复原节点的选中，暂无理想的解决方式
           const node = this.$refs.tree.getNodeById(queryNodeId)
           if (node) {
             return node
@@ -312,9 +311,11 @@
 
         // 容器拓扑的第1层级为cluster，先获取cluster拓扑
         const clusterTopo = await topologyInstanceService.getContainerTopo({
-          bk_biz_id: this.bizId,
-          bk_reference_obj_id: BUILTIN_MODELS.BUSINESS,
-          bk_reference_id: this.bizId
+          bizId: this.bizId,
+          params: {
+            bk_reference_obj_id: BUILTIN_MODELS.BUSINESS,
+            bk_reference_id: this.bizId
+          }
         })
 
         let asyncTopoTreeData = null
@@ -337,9 +338,11 @@
           }
 
           const data = await topologyInstanceService.getContainerTopo({
-            bk_biz_id: this.bizId,
-            bk_reference_obj_id: objId,
-            bk_reference_id: instId
+            bizId: this.bizId,
+            params: {
+              bk_reference_obj_id: objId,
+              bk_reference_id: instId
+            }
           })
 
           // 加载第1个层级的时候，将数据赋予asyncTopoTreeData，因为此处为引用赋值，此后对data追加child时数据
@@ -399,9 +402,11 @@
         }
 
         const topoList = await topologyInstanceService.getContainerTopo({
-          bk_biz_id: this.bizId,
-          bk_reference_obj_id: node.data.bk_obj_id,
-          bk_reference_id: node.data.bk_inst_id
+          bizId: this.bizId,
+          params: {
+            bk_reference_obj_id: node.data.bk_obj_id,
+            bk_reference_id: node.data.bk_inst_id
+          }
         })
 
         // 指定哪些是叶子节点，叶子节点不会再显示展开的小箭头
@@ -535,12 +540,14 @@
       async setContainerNodeCount(nodes) {
         try {
           const params = {
-            bk_biz_id: this.bizId,
-            resource_info: nodes.map(({ data }) => ({
-              kind: data.bk_obj_id,
-              // folder传递的是上级clusterid
-              id: data.is_folder ? data.ref_id : data.bk_inst_id
-            }))
+            bizId: this.bizId,
+            params: {
+              resource_info: nodes.map(({ data }) => ({
+                kind: data.bk_obj_id,
+                // folder传递的是上级clusterid
+                id: data.is_folder ? data.ref_id : data.bk_inst_id
+              }))
+            }
           }
           const { hostStats, podStats } = await topologyInstanceService.getContainerTopoNodeStats(params)
           nodes.forEach(({ data }) => {

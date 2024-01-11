@@ -27,7 +27,6 @@
   } from '@/dictionary/menu-symbol'
   import ModelSyncStatus from './children/model-sync-status.vue'
   import useModelSyncStatus, { isSyncing, isSynced } from './children/use-model-sync-status'
-  import { escapeRegexChar } from '@/utils/util'
 
   const props = defineProps({
     templateId: {
@@ -46,7 +45,6 @@
 
   const bindModelList = ref([])
   const searchName = ref('')
-  const stuff = ref({ type: 'default', payload: { emptyText: t('bk.table.emptyText') } })
 
   const TABLE_ROW_HEIGHT = 43
   const tableMaxHeight = computed(() => store.state.appHeight - 272 - 50)
@@ -71,17 +69,14 @@
     }
 
     if (searchName.value?.length) {
-      stuff.value.type = 'search'
       params.filter = {
         condition: 'AND',
         rules: [{
           field: 'bk_obj_name',
           operator: queryBuilderOperator(QUERY_OPERATOR.LIKE),
-          value: escapeRegexChar(searchName.value)
+          value: searchName.value
         }]
       }
-    } else {
-      stuff.value.type = 'default'
     }
 
     return params
@@ -171,10 +166,6 @@
         modelId: model.bk_obj_id
       }
     })
-  }
-  const handleClearFilter = () => {
-    searchName.value = ''
-    stuff.value.type = 'default'
   }
 
   onUnmounted(() => {
@@ -272,11 +263,6 @@
           </cmdb-auth>
         </template>
       </bk-table-column>
-      <cmdb-table-empty
-        slot="empty"
-        :stuff="stuff"
-        @clear="handleClearFilter"
-      ></cmdb-table-empty>
     </bk-table>
   </div>
 </template>
