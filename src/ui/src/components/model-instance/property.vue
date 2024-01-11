@@ -32,7 +32,8 @@
                 :is-show-overflow-tips="isShowOverflowTips(property)"
                 :ref="`property-value-${property.bk_property_id}`"
                 :value="instState[property.bk_property_id]"
-                :property="property">
+                :property="property"
+                :instance="instState">
               </cmdb-property-value>
             </div>
             <template v-if="!loadingState.includes(property)">
@@ -64,7 +65,8 @@
                     <i class="property-edit icon-cc-edit-shape"></i>
                   </bk-button>
                 </cmdb-auth>
-                <div class="property-form" v-if="property === editState.property">
+                <div class="property-form" v-if="property === editState.property"
+                  @keyup="(event) => keyupCallMethodFn(event)">
                   <div :class="['form-component', property.bk_property_type]">
                     <component
                       :is="`cmdb-form-${property.bk_property_type}`"
@@ -140,6 +142,7 @@
   import projectService from '@/service/project/index.js'
   import authMixin from './mixin-auth'
   import { PROPERTY_TYPES } from '@/dictionary/property-constants'
+  import { keyupCallMethod } from '@/utils/util'
 
   export default {
     filters: {
@@ -203,6 +206,9 @@
       setFocus(id, focus) {
         const item = this.$el.querySelector(id)
         focus ? item.classList.add('focus') : item.classList.remove('focus')
+      },
+      keyupCallMethodFn(event) {
+        keyupCallMethod(event, this.confirm)
       },
       getPlaceholder(property) {
         const placeholderTxt = ['enum', 'list', 'organization'].includes(property.bk_property_type) ? '请选择xx' : '请输入xx'
@@ -418,7 +424,7 @@
                 color: #3c96ff;
                 cursor: pointer;
                 display: none;
-                font-size: 16px;
+                font-size: 12px;
             }
             .copy-box {
                 position: relative;
