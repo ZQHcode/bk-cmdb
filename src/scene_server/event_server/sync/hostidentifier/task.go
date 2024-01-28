@@ -24,6 +24,7 @@ import (
 	"configcenter/src/common"
 	"configcenter/src/common/blog"
 	"configcenter/src/scene_server/event_server/types"
+	"configcenter/src/thirdparty/apigw"
 	"configcenter/src/thirdparty/apigw/gse"
 	pushfile "configcenter/src/thirdparty/gse/push_file_forsyncdata"
 )
@@ -188,7 +189,7 @@ func (h *HostIdentifier) getV2TaskExecutionResultMap(task *Task, header http.Hea
 		AgentIDList: agentIDList,
 	}
 	for failCount < retryTimes {
-		resp, err = h.gseApiGWClient.GetTransferFileResult(h.ctx, header, req)
+		resp, err = apigw.Client().Gse().GetTransferFileResult(h.ctx, header, req)
 		if err != nil {
 			blog.Errorf("get task status from gse error, task: %v, err: %v, rid: %s", task, err, rid)
 			h.metric.getResultTotal.WithLabelValues("failed").Inc()
@@ -451,7 +452,7 @@ func (h *HostIdentifier) pushFileByV2Api(always bool, task []*gse.Task, header h
 	}
 
 	for always || failCount < retryTimes {
-		resp, err = h.gseApiGWClient.AsyncPushFile(h.ctx, header, req)
+		resp, err = apigw.Client().Gse().AsyncPushFile(h.ctx, header, req)
 		if err != nil {
 			h.metric.getAgentStatusTotal.WithLabelValues("failed").Inc()
 			failCount++

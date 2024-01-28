@@ -34,8 +34,7 @@ import (
 	"configcenter/src/storage/dal"
 	"configcenter/src/storage/dal/mongo/local"
 	"configcenter/src/storage/dal/redis"
-	"configcenter/src/thirdparty/apigw/apigwutil"
-	"configcenter/src/thirdparty/apigw/gse"
+	"configcenter/src/thirdparty/apigw"
 	"configcenter/src/thirdparty/gse/client"
 )
 
@@ -194,8 +193,7 @@ func (es *EventServer) initConfigs() error {
 		return nil
 	}
 
-	switch es.config.IdentifierConf.Version {
-	case eventtype.V1:
+	if es.config.IdentifierConf.Version == eventtype.V1 {
 		es.config.TaskConf, err = client.NewGseConnConfig("gse.taskServer")
 		if err != nil {
 			blog.Errorf("get gse taskServer Config error, err: %v", err)
@@ -207,20 +205,6 @@ func (es *EventServer) initConfigs() error {
 			blog.Errorf("get gse apiServer Config error, err: %v", err)
 			return err
 		}
-	case eventtype.V2:
-		config, err := apigwutil.ParseApiGWConfig("apiGW")
-		if err != nil {
-			blog.Errorf("get gse api gateway config error, err: %v", err)
-			return err
-		}
-		config.Address, err = apigwutil.ReplaceApiName(config.Address, apigwutil.GseName)
-		if err != nil {
-			blog.Errorf("replace the template var in api gateway address failed, addr: %v, apiName: %v, err: %v",
-				config.Address, apigwutil.GseName, err)
-			return err
-		}
-
-		es.config.GseApiGWConfig = config
 	}
 
 	return nil
@@ -292,7 +276,6 @@ func (es *EventServer) runSyncData() error {
 	var err error
 	var gseTaskClient *client.GseTaskServerClient
 	var gseApiClient *client.GseApiServerClient
-	var gwClient gse.GseClientInterface
 	switch es.config.IdentifierConf.Version {
 	case eventtype.V1:
 		gseTaskClient, err = client.NewGseTaskServerClient(es.config.TaskConf.Endpoints, es.config.TaskConf.TLSConf)
@@ -308,15 +291,14 @@ func (es *EventServer) runSyncData() error {
 		}
 
 	case eventtype.V2:
-		gwClient, err = gse.NewGseApiGWClient(es.config.GseApiGWConfig, es.engine.Metric().Registry())
-		if err != nil {
-			blog.Errorf("new gse api gateway client error, err: %v", err)
+		if err := apigw.InitApiGW(es.engine.Metric().Registry()); err != nil {
+			blog.Errorf("init gse api gateway failed, err: %v", err)
 			return err
 		}
 	}
 
 	syncData, err := hostidentifier.NewHostIdentifier(es.ctx, es.redisCli, es.engine, es.config.IdentifierConf,
-		gwClient, gseTaskClient, gseApiClient, es.config.IdentifierConf.Version)
+		gseTaskClient, gseApiClient, es.config.IdentifierConf.Version)
 	if err != nil {
 		blog.Errorf("new host identifier error, err: %v", err)
 		return err

@@ -28,8 +28,7 @@ import (
 	"configcenter/src/common/types"
 	"configcenter/src/common/webservice/ginservice"
 	"configcenter/src/storage/dal/redis"
-	"configcenter/src/thirdparty/apigw/apigwutil"
-	noticeCli "configcenter/src/thirdparty/apigw/notice"
+	"configcenter/src/thirdparty/apigw"
 	"configcenter/src/thirdparty/logplatform/opentelemetry"
 	"configcenter/src/web_server/app/options"
 	"configcenter/src/web_server/capability"
@@ -49,9 +48,8 @@ type Service struct {
 	Engine   *backbone.Engine
 	CacheCli redis.Client
 	*logics.Logics
-	Config    *options.Config
-	Session   redis.RedisStore
-	NoticeCli noticeCli.NoticeClientInterface
+	Config  *options.Config
+	Session redis.RedisStore
 }
 
 // WebService TODO
@@ -135,10 +133,9 @@ func (s *Service) WebService() *gin.Engine {
 	s.initFieldTemplate(ws)
 
 	c := &capability.Capability{
-		Ws:        ws,
-		Engine:    s.Engine,
-		Config:    s.Config,
-		NoticeCli: s.NoticeCli,
+		Ws:     ws,
+		Engine: s.Engine,
+		Config: s.Config,
 	}
 	// init excel func
 	excel.Init(c)
@@ -214,25 +211,7 @@ func (s *Service) InitNotice() error {
 		return nil
 	}
 
-	config, err := apigwutil.ParseApiGWConfig("apiGW")
-	if err != nil {
-		blog.Errorf("get api gateway config error, err: %v", err)
-		return err
-	}
-	config.Address, err = apigwutil.ReplaceApiName(config.Address, apigwutil.NoticeName)
-	if err != nil {
-		blog.Errorf("replace the template var in api gateway address failed, addr: %v, apiName: %v, err: %v",
-			config.Address, apigwutil.NoticeName, err)
-		return err
-	}
-
-	s.NoticeCli, err = noticeCli.NewNoticeApiGWClient(config, s.Engine.Metric().Registry())
-	if err != nil {
-		blog.Errorf("new gse api gateway client failed, err: %v", err)
-		return err
-	}
-
-	if _, err = s.NoticeCli.RegApp(context.Background(), http.Header{}); err != nil {
+	if _, err := apigw.Client().Notice().RegApp(context.Background(), http.Header{}); err != nil {
 		blog.Errorf("register to the notification center failed, err: %v", err)
 		return err
 	}

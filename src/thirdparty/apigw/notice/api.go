@@ -22,16 +22,16 @@ import (
 	"fmt"
 	"net/http"
 
-	"configcenter/src/thirdparty/apigw"
+	"configcenter/src/thirdparty/apigw/apigwutil"
 )
 
 // GetCurAnn get current announcements
 func (n *notice) GetCurAnn(ctx context.Context, h http.Header, params map[string]string) ([]CurAnnData, error) {
-	h.Set(apigw.AuthKey, n.service.Auth)
+	h.Set(apigwutil.AuthKey, n.auth)
 	resp := new(GetCurAnnResp)
 	subPath := "/prod/apigw/v1/announcement/get_current_announcements"
 
-	err := n.service.Client.Get().
+	err := n.client.Get().
 		WithContext(ctx).
 		WithParams(params).
 		SubResourcef(subPath).
@@ -52,11 +52,11 @@ func (n *notice) GetCurAnn(ctx context.Context, h http.Header, params map[string
 
 // RegApp register application
 func (n *notice) RegApp(ctx context.Context, h http.Header) (*RegAppData, error) {
-	h.Set(apigw.AuthKey, n.service.Auth)
+	h.Set(apigwutil.AuthKey, n.auth)
 	resp := new(RegAppResp)
 	subPath := "/prod/apigw/v1/register"
 
-	err := n.service.Client.Post().
+	err := n.client.Post().
 		WithContext(ctx).
 		SubResourcef(subPath).
 		WithHeaders(h).

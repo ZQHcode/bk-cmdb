@@ -30,6 +30,7 @@ import (
 	"configcenter/src/common/util"
 	"configcenter/src/scene_server/event_server/types"
 	"configcenter/src/storage/dal/redis"
+	"configcenter/src/thirdparty/apigw"
 	"configcenter/src/thirdparty/apigw/gse"
 	"configcenter/src/thirdparty/gse/client"
 	getstatus "configcenter/src/thirdparty/gse/get_agent_state_forsyncdata"
@@ -76,7 +77,6 @@ type HostIdentifier struct {
 	ctx                 context.Context
 	gseTaskServerClient *client.GseTaskServerClient
 	gseApiServerClient  *client.GseApiServerClient
-	gseApiGWClient      gse.GseClientInterface
 	apiVersion          types.ApiVersion
 	winFileConfig       *FileConf
 	linuxFileConfig     *FileConf
@@ -87,9 +87,9 @@ type HostIdentifier struct {
 
 // NewHostIdentifier new HostIdentifier struct
 func NewHostIdentifier(ctx context.Context, redisCli redis.Client, engine *backbone.Engine, conf *HostIdentifierConf,
-	apiGWClient gse.GseClientInterface, taskClient *client.GseTaskServerClient,
-	apiClient *client.GseApiServerClient, apiVersion types.ApiVersion) (*HostIdentifier, error) {
-	if apiGWClient == nil && (apiClient == nil || taskClient == nil) {
+	taskClient *client.GseTaskServerClient, apiClient *client.GseApiServerClient, apiVersion types.ApiVersion) (
+	*HostIdentifier, error) {
+	if apiVersion == types.V1 && (apiClient == nil || taskClient == nil) {
 		return nil, errors.New("connect to gse client is missing")
 	}
 	h := &HostIdentifier{
@@ -98,7 +98,6 @@ func NewHostIdentifier(ctx context.Context, redisCli redis.Client, engine *backb
 		engine:              engine,
 		gseTaskServerClient: taskClient,
 		gseApiServerClient:  apiClient,
-		gseApiGWClient:      apiGWClient,
 		winFileConfig:       conf.WinFileConf,
 		linuxFileConfig:     conf.LinuxFileConf,
 		watchLimiter:        flowctrl.NewRateLimiter(conf.RateLimiter.Qps, conf.RateLimiter.Burst),
@@ -609,7 +608,7 @@ func (h *HostIdentifier) getAgentStatusByV2Api(statusReqList []StatusReq, always
 	var err error
 	var resp *gse.ListAgentStateResp
 	for always || failCount < retryTimes {
-		resp, err = h.gseApiGWClient.ListAgentState(h.ctx, header, req)
+		resp, err = apigw.Client().Gse().ListAgentState(h.ctx, header, req)
 		if err != nil {
 			h.metric.getAgentStatusTotal.WithLabelValues("failed").Inc()
 			failCount++

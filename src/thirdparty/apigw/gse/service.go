@@ -21,10 +21,7 @@ import (
 	"context"
 	"net/http"
 
-	"configcenter/src/thirdparty/apigw"
-	"configcenter/src/thirdparty/apigw/apigwutil"
-
-	"github.com/prometheus/client_golang/prometheus"
+	"configcenter/src/apimachinery/rest"
 )
 
 type GseClientInterface interface {
@@ -35,17 +32,14 @@ type GseClientInterface interface {
 }
 
 type gse struct {
-	service *apigw.ApiGWSrv
+	auth   string
+	client rest.ClientInterface
 }
 
 // NewGseApiGWClient create gse api gateway client
-func NewGseApiGWClient(config *apigwutil.ApiGWConfig, reg prometheus.Registerer) (GseClientInterface, error) {
-	service, err := apigw.NewApiGW(config, reg)
-	if err != nil {
-		return nil, err
-	}
-
+func NewGseApiGWClient(auth string, client rest.ClientInterface) GseClientInterface {
 	return &gse{
-		service: service,
-	}, nil
+		auth:   auth,
+		client: client,
+	}
 }

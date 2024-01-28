@@ -26,6 +26,8 @@ import (
 	"configcenter/src/common/util"
 )
 
+var AuthKey = "x-bkapi-authorization"
+
 // AuthConfig defines the api gateway authorization config
 type AuthConfig struct {
 	AppAuthConfig `json:",inline"`

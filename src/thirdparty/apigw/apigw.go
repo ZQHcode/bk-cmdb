@@ -18,53 +18,92 @@
 package apigw
 
 import (
-	"fmt"
+	"sync"
 
-	"configcenter/src/apimachinery/flowctrl"
 	"configcenter/src/apimachinery/rest"
-	"configcenter/src/apimachinery/util"
+	"configcenter/src/common/blog"
 	"configcenter/src/thirdparty/apigw/apigwutil"
+	"configcenter/src/thirdparty/apigw/gse"
+	"configcenter/src/thirdparty/apigw/notice"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-var AuthKey = "x-bkapi-authorization"
-
-// ApiGWSrv api gateway service
-type ApiGWSrv struct {
-	Client rest.ClientInterface
-	Auth   string
+type ApiGWI interface {
+	Notice() notice.NoticeClientInterface
+	Gse() gse.GseClientInterface
 }
 
-// NewApiGW new a api gateway client
-func NewApiGW(config *apigwutil.ApiGWConfig, reg prometheus.Registerer) (*ApiGWSrv, error) {
+var apiGWCli *apiGW
 
-	apiMachineryConfig := &util.APIMachineryConfig{
-		QPS:       2000,
-		Burst:     2000,
-		TLSConfig: config.TLSConfig,
+// InitApiGW init api gateway client
+func InitApiGW(reg prometheus.Registerer) error {
+	if apiGWCli != nil {
+		return nil
 	}
 
-	client, err := util.NewClient(apiMachineryConfig.TLSConfig)
-	if nil != err {
-		return nil, err
+	config, err := apigwutil.ParseApiGWConfig("apiGW")
+	if err != nil {
+		blog.Errorf("get api gateway config error, err: %v", err)
+		return err
 	}
 
-	flowControl := flowctrl.NewRateLimiter(apiMachineryConfig.QPS, apiMachineryConfig.Burst)
+	cliConf, err := apigwutil.NewConfig(config, reg)
+	if err != nil {
+		blog.Errorf("new api gateway failed, err: %v", err)
+		return err
+	}
+	apiGWCli = &apiGW{config: cliConf}
 
-	esbCapability := &util.Capability{
-		Client: client,
-		Discover: &apigwutil.ApiGWDiscovery{
-			Servers: config.Address,
-		},
-		Throttle:   flowControl,
-		MetricOpts: util.MetricOption{Register: reg},
+	return nil
+}
+
+// Client get api gatewat client
+func Client() ApiGWI {
+	return apiGWCli
+}
+
+type apiGW struct {
+	sync.RWMutex
+	config *apigwutil.CliConf
+	notice notice.NoticeClientInterface
+	gse    gse.GseClientInterface
+}
+
+// Notice get notice api gateway client
+func (a *apiGW) Notice() notice.NoticeClientInterface {
+	a.RLock()
+	cli := a.notice
+	a.RUnlock()
+	if cli == nil {
+		a.Lock()
+		capability := a.config.Capability
+		capability.Discover = &apigwutil.ApiGWDiscovery{
+			Servers: apigwutil.ReplaceApiName(a.config.Address, apigwutil.NoticeName),
+		}
+		a.notice = notice.NewNoticeApiGWClient(a.config.Auth, rest.NewRESTClient(&capability, "/"))
+		cli = a.notice
+		a.Unlock()
 	}
 
-	apigw := &ApiGWSrv{
-		Client: rest.NewRESTClient(esbCapability, "/"),
-		Auth: fmt.Sprintf(`{"bk_username": "%s", "bk_app_code": "%s", "bk_app_secret": "%s"}`, config.Username,
-			config.AppCode, config.AppSecret),
+	return cli
+}
+
+// Gse get gse api gateway client
+func (a *apiGW) Gse() gse.GseClientInterface {
+	a.RLock()
+	cli := a.gse
+	a.RUnlock()
+	if cli == nil {
+		a.Lock()
+		capability := a.config.Capability
+		capability.Discover = &apigwutil.ApiGWDiscovery{
+			Servers: apigwutil.ReplaceApiName(a.config.Address, apigwutil.GseName),
+		}
+		a.gse = gse.NewGseApiGWClient(a.config.Auth, rest.NewRESTClient(&capability, "/"))
+		cli = a.gse
+		a.Unlock()
 	}
-	return apigw, nil
+
+	return cli
 }

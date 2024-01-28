@@ -22,18 +22,18 @@ import (
 	"fmt"
 	"net/http"
 
-	"configcenter/src/thirdparty/apigw"
+	"configcenter/src/thirdparty/apigw/apigwutil"
 )
 
 // ListAgentState list gse agent state
-func (p *gse) ListAgentState(ctx context.Context, h http.Header, data *ListAgentStateRequest) (*ListAgentStateResp,
+func (g *gse) ListAgentState(ctx context.Context, h http.Header, data *ListAgentStateRequest) (*ListAgentStateResp,
 	error) {
 
-	h.Set(apigw.AuthKey, p.service.Auth)
+	h.Set(apigwutil.AuthKey, g.auth)
 	resp := new(ListAgentStateResp)
 	subPath := "/prod/api/v2/cluster/list_agent_state"
 
-	err := p.service.Client.Post().
+	err := g.client.Post().
 		WithContext(ctx).
 		Body(data).
 		SubResourcef(subPath).
@@ -53,14 +53,14 @@ func (p *gse) ListAgentState(ctx context.Context, h http.Header, data *ListAgent
 }
 
 // AsyncPushFile push file to target host
-func (p *gse) AsyncPushFile(ctx context.Context, h http.Header, data *AsyncPushFileRequest) (*AsyncPushFileResp,
+func (g *gse) AsyncPushFile(ctx context.Context, h http.Header, data *AsyncPushFileRequest) (*AsyncPushFileResp,
 	error) {
 
-	h.Set(apigw.AuthKey, p.service.Auth)
+	h.Set(apigwutil.AuthKey, g.auth)
 	resp := new(AsyncPushFileResp)
 	subPath := "/prod/api/v2/task/async_push_file"
 
-	err := p.service.Client.Post().
+	err := g.client.Post().
 		WithContext(ctx).
 		Body(data).
 		SubResourcef(subPath).
@@ -80,14 +80,14 @@ func (p *gse) AsyncPushFile(ctx context.Context, h http.Header, data *AsyncPushF
 }
 
 // GetTransferFileResult get transfer file result
-func (p *gse) GetTransferFileResult(ctx context.Context, h http.Header, data *GetTransferFileResultRequest) (
+func (g *gse) GetTransferFileResult(ctx context.Context, h http.Header, data *GetTransferFileResultRequest) (
 	*GetTransferFileResultResp, error) {
 
-	h.Set(apigw.AuthKey, p.service.Auth)
+	h.Set(apigwutil.AuthKey, g.auth)
 	resp := new(GetTransferFileResultResp)
 	subPath := "/prod/api/v2/task/async/get_transfer_file_result"
 
-	err := p.service.Client.Post().
+	err := g.client.Post().
 		WithContext(ctx).
 		Body(data).
 		SubResourcef(subPath).

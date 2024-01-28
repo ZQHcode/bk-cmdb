@@ -22,10 +22,12 @@ import (
 	"configcenter/src/common"
 	"configcenter/src/common/backbone"
 	cc "configcenter/src/common/backbone/configcenter"
+	"configcenter/src/common/blog"
 	"configcenter/src/common/resource/esb"
 	"configcenter/src/common/resource/jwt"
 	"configcenter/src/common/types"
 	"configcenter/src/storage/dal/redis"
+	"configcenter/src/thirdparty/apigw"
 	"configcenter/src/web_server/app/options"
 	"configcenter/src/web_server/logics"
 	websvc "configcenter/src/web_server/service"
@@ -105,6 +107,11 @@ func Run(ctx context.Context, cancel context.CancelFunc, op *options.ServerOptio
 	// init jwt handler
 	if err = jwt.Init("webServer"); err != nil {
 		return fmt.Errorf("init jwt failed, err: %v", err)
+	}
+
+	if err := apigw.InitApiGW(service.Engine.Metric().Registry()); err != nil {
+		blog.Errorf("init api gateway failed, err: %v", err)
+		return err
 	}
 
 	if err := service.InitNotice(); err != nil {

@@ -21,10 +21,7 @@ import (
 	"context"
 	"net/http"
 
-	"configcenter/src/thirdparty/apigw"
-	"configcenter/src/thirdparty/apigw/apigwutil"
-
-	"github.com/prometheus/client_golang/prometheus"
+	"configcenter/src/apimachinery/rest"
 )
 
 type NoticeClientInterface interface {
@@ -33,17 +30,14 @@ type NoticeClientInterface interface {
 }
 
 type notice struct {
-	service *apigw.ApiGWSrv
+	auth   string
+	client rest.ClientInterface
 }
 
 // NewNoticeApiGWClient create notice api gateway client
-func NewNoticeApiGWClient(config *apigwutil.ApiGWConfig, reg prometheus.Registerer) (NoticeClientInterface, error) {
-	service, err := apigw.NewApiGW(config, reg)
-	if err != nil {
-		return nil, err
-	}
-
+func NewNoticeApiGWClient(auth string, client rest.ClientInterface) NoticeClientInterface {
 	return &notice{
-		service: service,
-	}, nil
+		auth:   auth,
+		client: client,
+	}
 }
