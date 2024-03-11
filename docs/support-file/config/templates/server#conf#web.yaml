@@ -8,6 +8,18 @@ language:
 es:
   #全文检索功能开关(取值：off/on)，默认是off，开启是on
   fullTextSearch: "off"
+
+# esb配置
+esb:
+  addr: http://__BK_PAAS_PRIVATE_ADDR__
+  appCode: __BK_CMDB_APP_CODE__
+  appSecret: __BK_CMDB_APP_SECRET__
+  insecureSkipVerify: true
+  certFile:
+  keyFile:
+  caFile:
+  password:
+
 # web_server专属配置
 webServer:
   api:
