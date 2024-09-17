@@ -274,6 +274,7 @@ func (es *EventServer) Run() error {
 	if err := es.runSyncData(); err != nil {
 		return err
 	}
+	fmt.Errorf("")
 	return nil
 }
 
